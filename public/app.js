@@ -263,13 +263,32 @@ function updateSnoozeLabels() {
   setLabel("#snooze-tomorrow", "Tomorrow morning", previewSnoozeTime(8));
 }
 
+function lerpColor(t) {
+  const g = [34, 197, 94];
+  const o = [249, 115, 22];
+  const r = Math.round(g[0] + (o[0] - g[0]) * t);
+  const gg = Math.round(g[1] + (o[1] - g[1]) * t);
+  const b = Math.round(g[2] + (o[2] - g[2]) * t);
+  return `rgb(${r}, ${gg}, ${b})`;
+}
+
 function openSnooze(card) {
   const sheet = $("#snooze-sheet");
   updateSnoozeLabels();
   const slider = $("#snooze-custom-hours");
   const valEl = $("#snooze-custom-val");
-  valEl.textContent = slider.value;
-  slider.oninput = () => { valEl.textContent = slider.value; };
+  const submitBtn = sheet.querySelector('[data-snooze="custom"]');
+  const updateUi = () => {
+    const v = parseInt(slider.value, 10);
+    valEl.textContent = v;
+    const t = (v - 1) / (72 - 1);
+    const color = lerpColor(t);
+    submitBtn.style.background = color;
+    submitBtn.style.borderColor = color;
+    valEl.style.color = color;
+  };
+  updateUi();
+  slider.oninput = updateUi;
   sheet.hidden = false;
   sheet.onclick = async (e) => {
     const btn = e.target.closest("[data-snooze]");
