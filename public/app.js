@@ -266,6 +266,10 @@ function updateSnoozeLabels() {
 function openSnooze(card) {
   const sheet = $("#snooze-sheet");
   updateSnoozeLabels();
+  const slider = $("#snooze-custom-hours");
+  const valEl = $("#snooze-custom-val");
+  valEl.textContent = slider.value;
+  slider.oninput = () => { valEl.textContent = slider.value; };
   sheet.hidden = false;
   sheet.onclick = async (e) => {
     const btn = e.target.closest("[data-snooze]");

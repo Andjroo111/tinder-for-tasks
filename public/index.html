@@ -48,8 +48,12 @@
       <button data-snooze="afternoon" id="snooze-afternoon">This afternoon</button>
       <button data-snooze="evening" id="snooze-evening">This evening</button>
       <button data-snooze="tomorrow" id="snooze-tomorrow">Tomorrow morning</button>
-      <div class="custom-snooze">
-        <input id="snooze-custom-hours" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="Custom hours" aria-label="Custom hours">
+      <div class="custom-snooze-slider">
+        <div class="slider-head">
+          <span class="slider-label">Custom</span>
+          <span class="slider-value"><span id="snooze-custom-val">4</span> hrs</span>
+        </div>
+        <input id="snooze-custom-hours" type="range" min="1" max="72" step="1" value="4">
         <button data-snooze="custom" class="primary">Snooze</button>
       </div>
       <button class="cancel" data-snooze="cancel">Cancel</button>
@@ -70,8 +74,11 @@
         <button data-tag="tone">Tone</button>
         <button data-tag="word">Word choice</button>
         <button data-tag="wrong">Wrong info</button>
+        <button data-tag="long">Too long</button>
+        <button data-tag="short">Too short</button>
         <button data-tag="greeting">"Hey [Name]!"</button>
         <button data-tag="emojis">Too many emojis</button>
+        <button data-tag="salesy">Too salesy</button>
         <button data-tag="context">Missing context</button>
       </div>
       <div class="sheet-actions">

@@ -211,10 +211,11 @@ html, body {
   animation: slideUp 0.25s cubic-bezier(0.22, 0.9, 0.34, 1);
 }
 .sheet h3 { margin: 0 0 10px; font-size: 17px; }
-.sheet-inner button {
+.sheet-inner > button {
   padding: 14px; border-radius: 12px;
   background: var(--surface-2); border: 1px solid var(--border);
   color: var(--text); font-size: 15px; font-weight: 500;
+  min-height: 50px;
 }
 .sheet-inner button.cancel { color: var(--muted); background: transparent; border-color: transparent; }
 .sheet-inner button.primary { background: var(--accent); color: #0b2a1c; border-color: var(--accent); }
@@ -222,6 +223,34 @@ html, body {
 .snooze-time {
   float: right; color: var(--muted); font-weight: 400;
   font-size: 13px; padding-right: 4px;
+}
+.custom-snooze-slider {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.slider-head { display: flex; justify-content: space-between; align-items: center; }
+.slider-label { font-size: 14px; font-weight: 500; }
+.slider-value { color: var(--accent); font-weight: 600; font-size: 15px; }
+#snooze-custom-hours[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px;
+  background: var(--border); border-radius: 3px;
+  padding: 0 !important; margin: 0; outline: none;
+}
+#snooze-custom-hours[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--surface);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.custom-snooze-slider button {
+  padding: 12px !important; border-radius: 10px !important;
+  font-size: 14px !important; font-weight: 600 !important;
+  margin: 0 !important; min-height: 0 !important;
 }
 .custom-snooze {
   display: flex !important; flex-direction: row !important;
@@ -335,7 +364,16 @@ html, body {
   gap: 8px; margin-bottom: 16px;
 }
 .tags button {
-  padding: 10px 6px !important; font-size: 12px !important;
+  height: 54px !important;
+  padding: 6px 4px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  display: flex !important;
+  align-items: center; justify-content: center;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
 }
 .tags button.active {
   background: var(--accent) !important; color: #0b2a1c !important;
@@ -354,17 +392,25 @@ html, body {
 .auto-entry .time { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
 #toast {
-  position: fixed; top: calc(env(safe-area-inset-top) + 8px);
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
   left: 50%; transform: translateX(-50%);
   background: var(--accent); color: #0b2a1c;
-  padding: 8px 18px; border-radius: 16px; font-size: 13px;
-  font-weight: 600;
-  z-index: 1000; animation: fade 0.2s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  padding: 14px 28px; border-radius: 24px; font-size: 16px;
+  font-weight: 700;
+  z-index: 1000;
+  animation: toastPop 0.3s cubic-bezier(0.22, 0.9, 0.34, 1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   pointer-events: none;
+  min-width: 140px; text-align: center;
+  letter-spacing: 0.3px;
 }
 #toast.red { background: var(--danger); color: #fff; }
 #toast.orange { background: var(--warn); color: #1a1a00; }
+@keyframes toastPop {
+  from { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
 
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp {
