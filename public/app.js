@@ -8,9 +8,15 @@ let currentIndex = 0;
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
+    credentials: "same-origin",
+    cache: "no-store",
     ...opts,
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
   });
+  if (res.status === 401) {
+    location.href = "/login";
+    return { error: "unauthorized" };
+  }
   return res.json();
 }
 

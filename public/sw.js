@@ -1,5 +1,5 @@
-// Self-unregistering service worker — pure network passthrough.
-// If you ever see stale behavior, visit /unregister-sw to nuke caches.
+// Self-clearing service worker. No caching. Preserves the original Request
+// (including credentials mode) — bare fetch() below would strip cookies.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", async (e) => {
   e.waitUntil((async () => {
@@ -9,5 +9,5 @@ self.addEventListener("activate", async (e) => {
   })());
 });
 self.addEventListener("fetch", (e) => {
-  e.respondWith(fetch(e.request, { cache: "no-store" }).catch(() => new Response("offline", { status: 503 })));
+  e.respondWith(fetch(e.request).catch(() => new Response("offline", { status: 503 })));
 });
