@@ -508,6 +508,27 @@ function attachMicButton() {
 }
 attachMicButton();
 
+async function loadMode() {
+  const btn = $("#mode-toggle");
+  const data = await api("/api/mode");
+  btn.textContent = data.mode === "live" ? "LIVE" : "TEST";
+  btn.classList.toggle("live", data.mode === "live");
+  btn.dataset.mode = data.mode;
+  btn.dataset.testAvailable = data.testContactSet ? "1" : "0";
+}
+$("#mode-toggle").addEventListener("click", async () => {
+  const btn = $("#mode-toggle");
+  const current = btn.dataset.mode;
+  const target = current === "live" ? "test" : "live";
+  const msg = target === "live"
+    ? "Switch to LIVE mode?\n\nSMS will go to REAL CLIENTS. Be sure."
+    : "Switch back to TEST mode?\n\nAll SMS will redirect to your own phone.";
+  if (!confirm(msg)) return;
+  const res = await api("/api/mode", { method: "POST", body: JSON.stringify({ mode: target }) });
+  if (res.error) { alert(res.error); return; }
+  loadMode();
+});
+
 $("#view-autos").addEventListener("click", openAutos);
 $("#reseed-btn").addEventListener("click", async () => {
   const res = await api("/api/dev/reseed", { method: "POST" });
@@ -538,4 +559,6 @@ if ("serviceWorker" in navigator) {
 }
 
 load();
+loadMode();
 setInterval(load, 30000);
+setInterval(loadMode, 60000);

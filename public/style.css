@@ -35,6 +35,18 @@ html, body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 20px; border-bottom: 1px solid var(--border);
 }
+.mode-toggle {
+  background: var(--warn); color: #1a1a00;
+  border: none; border-radius: 14px;
+  padding: 6px 14px; font-size: 12px;
+  font-weight: 800; letter-spacing: 1px;
+  font-family: inherit;
+  box-shadow: 0 0 0 2px rgba(249,115,22,0.25);
+}
+.mode-toggle.live {
+  background: var(--accent); color: #0b2a1c;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
+}
 .title { font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
 .badge {
   min-width: 28px; height: 28px; padding: 0 8px;

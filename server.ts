@@ -14,6 +14,7 @@ import { sendSMS } from "./lib/sms";
 import { logEditFeedback } from "./lib/feedback";
 import { transcribeAudio } from "./lib/transcribe";
 import { isAuthEnabled, verifyPassword, makeToken, verifyToken, cookieHeader, parseCookie } from "./lib/auth";
+import { getMode, setMode } from "./lib/mode";
 import type { CardCreatePayload } from "./lib/types";
 
 const app = new Hono();
@@ -208,6 +209,22 @@ app.post("/api/transcribe", async (c) => {
 });
 
 app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
+
+app.get("/api/mode", async (c) => {
+  const mode = await getMode();
+  const testContactSet = !!process.env.SMS_TEST_ROUTE_CONTACT_ID;
+  return c.json({ mode, testContactSet });
+});
+
+app.post("/api/mode", async (c) => {
+  const body = (await c.req.json()) as { mode: "live" | "test" };
+  if (body.mode !== "live" && body.mode !== "test") return c.json({ error: "invalid mode" }, 400);
+  if (body.mode === "test" && !process.env.SMS_TEST_ROUTE_CONTACT_ID) {
+    return c.json({ error: "SMS_TEST_ROUTE_CONTACT_ID not configured — can't enter test mode" }, 400);
+  }
+  await setMode(body.mode);
+  return c.json({ mode: body.mode });
+});
 
 app.post("/api/dev/reseed", async (c) => {
   const { spawnSync } = await import("child_process");
