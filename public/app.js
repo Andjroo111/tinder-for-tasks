@@ -491,58 +491,5 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-const TUT_STEPS = [
-  { caption: "Swipe RIGHT to approve & send", cardClass: "swipe-right", handClass: "move-right" },
-  { caption: "Swipe LEFT to skip", cardClass: "swipe-left", handClass: "move-left" },
-  { caption: "Swipe DOWN to snooze", cardClass: "swipe-down", handClass: "move-down" },
-  { caption: "Press & hold to edit", cardClass: "press-hold", handClass: "pressing" },
-];
-
-function runTutorial() {
-  const tut = $("#tutorial");
-  const card = $("#tut-card");
-  const hand = $("#tut-hand");
-  const caption = $("#tut-caption");
-  const dots = tut.querySelectorAll(".dot");
-  let step = 0;
-  let playing = false;
-
-  function play() {
-    if (playing) return;
-    playing = true;
-    card.className = "tut-card";
-    hand.className = "tut-hand";
-    dots.forEach((d, i) => d.classList.toggle("active", i === step));
-    caption.textContent = TUT_STEPS[step].caption;
-    setTimeout(() => {
-      card.classList.add(TUT_STEPS[step].cardClass);
-      hand.classList.add(TUT_STEPS[step].handClass);
-      playing = false;
-    }, 200);
-  }
-
-  $("#tut-skip").onclick = close;
-  $("#tut-next").onclick = () => {
-    step++;
-    if (step >= TUT_STEPS.length) return close();
-    play();
-  };
-
-  function close() {
-    tut.hidden = true;
-    try { localStorage.setItem("tft_tutorial_seen", "1"); } catch (e) {}
-  }
-
-  tut.hidden = false;
-  play();
-  const interval = setInterval(() => { if (tut.hidden) clearInterval(interval); else play(); }, 2400);
-}
-
-try {
-  if (!localStorage.getItem("tft_tutorial_seen")) {
-    runTutorial();
-  }
-} catch (e) {}
-
 load();
 setInterval(load, 30000);
