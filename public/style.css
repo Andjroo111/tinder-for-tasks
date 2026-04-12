@@ -198,6 +198,21 @@ html, body {
 }
 .sheet-inner button.cancel { color: var(--muted); background: transparent; border-color: transparent; }
 .sheet-inner button.primary { background: var(--accent); color: #0b2a1c; border-color: var(--accent); }
+.custom-snooze {
+  display: flex; gap: 8px; align-items: center;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 6px;
+}
+.custom-snooze input {
+  flex: 1; background: transparent; border: none;
+  color: var(--text); font-family: inherit; font-size: 15px;
+  padding: 8px 12px; -webkit-user-select: text; user-select: text;
+}
+.custom-snooze input:focus { outline: none; }
+.custom-snooze button {
+  padding: 10px 14px !important; border-radius: 8px !important;
+  font-size: 13px !important; flex-shrink: 0;
+}
 
 .edit-inner textarea {
   width: 100%; background: var(--surface-2);

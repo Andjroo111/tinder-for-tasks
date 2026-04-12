@@ -46,7 +46,12 @@
       <h3>Snooze for…</h3>
       <button data-snooze="1h">1 hour</button>
       <button data-snooze="3h">3 hours</button>
+      <button data-snooze="tonight">Tonight 6pm</button>
       <button data-snooze="tomorrow">Tomorrow 8am</button>
+      <div class="custom-snooze">
+        <input id="snooze-custom-hours" type="number" min="1" max="168" placeholder="Custom hours">
+        <button data-snooze="custom" class="primary">Snooze custom</button>
+      </div>
       <button class="cancel" data-snooze="cancel">Cancel</button>
     </div>
   </div>
@@ -66,8 +71,10 @@
         <button data-tag="word">Word choice</button>
         <button data-tag="wrong">Wrong info</button>
         <button data-tag="long">Too long</button>
+        <button data-tag="short">Too short</button>
         <button data-tag="greeting">"Hey [Name]!"</button>
         <button data-tag="emojis">Too many emojis</button>
+        <button data-tag="salesy">Too salesy</button>
         <button data-tag="context">Missing context</button>
       </div>
       <div class="sheet-actions">

@@ -69,11 +69,11 @@ function buildCard(card) {
     body += `<div class="card-msg">"${escape(card.clientMessage)}"</div>`;
   }
 
-  const threadHasMultiple = (card.conversationHistory || []).length > 1;
-  if (threadHasMultiple) {
+  const hist = card.conversationHistory || [];
+  if (hist.length >= 2) {
     body += `<div class="section">
       <div class="section-label">Thread</div>
-      <div class="thread">${card.conversationHistory
+      <div class="thread">${hist
         .slice(-5)
         .map((m) => `<div class="thread-entry"><span class="from">${escape(m.from)}:</span> ${escape(m.text)}</div>`)
         .join("")}</div>
@@ -172,6 +172,18 @@ function attachGestures(el, card) {
     }
     const rot = dx / 20;
     el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    // Color tint based on drag direction
+    const threshold = 100;
+    const intensity = Math.min(Math.max(Math.abs(dx), Math.abs(dy)) / threshold, 1);
+    if (dx > 40 && Math.abs(dy) < Math.abs(dx)) {
+      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(94,230,168,${intensity * 0.9})`;
+    } else if (dx < -40 && Math.abs(dy) < Math.abs(dx)) {
+      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(255,107,107,${intensity * 0.9})`;
+    } else if (dy > 40) {
+      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(255,184,77,${intensity * 0.9})`;
+    } else {
+      el.style.boxShadow = "";
+    }
   });
 
   el.addEventListener("pointerup", () => {
@@ -194,6 +206,7 @@ function attachGestures(el, card) {
       setTimeout(() => openSnooze(card), 250);
     } else {
       el.style.transform = "";
+      el.style.boxShadow = "";
     }
   });
 
@@ -201,6 +214,7 @@ function attachGestures(el, card) {
     dragging = false;
     if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
     el.style.transform = "";
+    el.style.boxShadow = "";
     el.classList.remove("swiping");
   });
 }
@@ -223,15 +237,24 @@ function openSnooze(card) {
   sheet.onclick = async (e) => {
     const btn = e.target.closest("[data-snooze]");
     if (!btn) return;
-    sheet.hidden = true;
-    if (btn.dataset.snooze === "cancel") {
+    const action = btn.dataset.snooze;
+    if (action === "cancel") {
+      sheet.hidden = true;
       const topEl = stackEl.querySelector(".card");
       if (topEl) topEl.style.transform = "";
       return;
     }
+    const payload = { duration: action };
+    if (action === "custom") {
+      const hours = parseInt($("#snooze-custom-hours").value, 10);
+      if (!hours || hours < 1) { toast("Enter hours 1-168"); return; }
+      payload.hours = hours;
+    }
+    sheet.hidden = true;
+    $("#snooze-custom-hours").value = "";
     await api(`/api/cards/${card.cardId}/snooze`, {
       method: "POST",
-      body: JSON.stringify({ duration: btn.dataset.snooze }),
+      body: JSON.stringify(payload),
     });
     toast("Snoozed");
     load();
@@ -392,12 +415,29 @@ function attachMicButton() {
   const btn = $("#mic-btn");
   if (btn._attached) return;
   btn._attached = true;
-  const down = (e) => { e.preventDefault(); startRecording(); };
-  const up = (e) => { e.preventDefault(); stopRecording(); };
+  let active = false;
+  const down = (e) => {
+    if (active) return;
+    active = true;
+    e.preventDefault();
+    startRecording();
+  };
+  const up = (e) => {
+    if (!active) return;
+    active = false;
+    e.preventDefault();
+    stopRecording();
+  };
+  // Touch events first (Safari iOS prefers these), pointer as fallback
+  btn.addEventListener("touchstart", down, { passive: false });
+  btn.addEventListener("touchend", up, { passive: false });
+  btn.addEventListener("touchcancel", up, { passive: false });
   btn.addEventListener("pointerdown", down);
   btn.addEventListener("pointerup", up);
   btn.addEventListener("pointercancel", up);
   btn.addEventListener("pointerleave", (e) => { if (btn.classList.contains("recording")) up(e); });
+  // Safety: if mouse leaves window while recording
+  window.addEventListener("blur", () => { if (active) up({ preventDefault() {} }); });
 }
 attachMicButton();
 

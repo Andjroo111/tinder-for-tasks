@@ -25,6 +25,8 @@ await upsertCard({
   triggerEvent: "inbound_sms",
   clientMessage: "Can we do Tuesday or Wednesday this week?",
   conversationHistory: [
+    { from: "andrew", text: "Great session last week! Looking forward to Rocky's next one.", timestamp: new Date(now.getTime() - 7 * 86400000).toISOString() },
+    { from: "client", text: "Thanks! He did really well with the place command today.", timestamp: new Date(now.getTime() - 7 * 86400000 + 2 * 3600000).toISOString() },
     { from: "client", text: "Can we do Tuesday or Wednesday this week?", timestamp: new Date(now.getTime() - 15 * 60000).toISOString() },
   ],
   draftResponse: "Tuesday at 1pm works great! I'll see you and Rocky then.",
@@ -62,7 +64,10 @@ await upsertCard({
   phone: "+18165551111",
   triggerEvent: "new_lead",
   clientMessage: "Form submission — Duke (2yr Lab), goals: leash pulling, door greeting",
-  draftResponse: "Hey Mike, thanks for reaching out about Duke! I'd love to chat about the leash pulling and door greeting — do you have 10-15 min this week for a quick call so I can ask a few questions and walk you through how I'd approach it?",
+  conversationHistory: [
+    { from: "system", text: "Form submission via gooddogzkc.com/contact — Duke (2yr Lab). Goals: leash pulling, door greeting for guests.", timestamp: new Date(now.getTime() - 8 * 60000).toISOString() },
+  ],
+  draftResponse: "Hey Mike, thanks for reaching out about Duke. Leash pulling and door greeting are two of the most common issues I work on. Want to jump on a quick 10-min call this week so I can ask a couple questions and walk you through how I'd approach it?",
   reasoning: "Form submission with dog name + specific goals — lead with empathy on the behaviors they listed, propose a consultation call.",
   tier: 3,
 });
@@ -84,7 +89,7 @@ await upsertCard({
   tier: 3,
 });
 
-// Card 5 — Tier 3 follow-up (another swipe test)
+// Card 5 — Tier 3 follow-up with thread
 await upsertCard({
   contactId: "test-5-ellie",
   contactName: "Ellie McCroskie",
@@ -92,7 +97,11 @@ await upsertCard({
   phone: "+19135553333",
   triggerEvent: "follow_up",
   clientMessage: "Yes that time works!",
-  draftResponse: "Perfect — I'll see you and Luna Saturday at 10am!",
+  conversationHistory: [
+    { from: "andrew", text: "Hey Ellie, is Saturday 10am still good for Luna's next session?", timestamp: new Date(now.getTime() - 90 * 60000).toISOString() },
+    { from: "client", text: "Yes that time works!", timestamp: new Date(now.getTime() - 5 * 60000).toISOString() },
+  ],
+  draftResponse: "Perfect — see you and Luna Saturday at 10am.",
   tier: 3,
 });
 

@@ -135,7 +135,7 @@ app.post("/api/cards/:id/edit", async (c) => {
 });
 
 app.post("/api/cards/:id/snooze", async (c) => {
-  const body = (await c.req.json()) as { duration: "1h" | "3h" | "tomorrow" };
+  const body = (await c.req.json()) as { duration: string; hours?: number };
   const now = new Date();
   let until: Date;
   switch (body.duration) {
@@ -145,10 +145,19 @@ app.post("/api/cards/:id/snooze", async (c) => {
     case "3h":
       until = new Date(now.getTime() + 3 * 60 * 60 * 1000);
       break;
+    case "tonight":
+      until = new Date(now);
+      until.setHours(18, 0, 0, 0);
+      if (until.getTime() <= now.getTime()) until.setDate(until.getDate() + 1);
+      break;
     case "tomorrow":
       until = new Date(now);
       until.setDate(until.getDate() + 1);
       until.setHours(8, 0, 0, 0);
+      break;
+    case "custom":
+      if (!body.hours || body.hours < 1 || body.hours > 168) return c.json({ error: "hours must be 1-168" }, 400);
+      until = new Date(now.getTime() + body.hours * 60 * 60 * 1000);
       break;
     default:
       return c.json({ error: "invalid duration" }, 400);
