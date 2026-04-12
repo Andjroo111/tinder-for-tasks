@@ -54,11 +54,12 @@
   <div id="edit-sheet" class="sheet" hidden>
     <div class="sheet-inner edit-inner">
       <h3>Edit draft</h3>
-      <div class="edit-field">
-        <textarea id="edit-text" rows="6"></textarea>
-        <button id="mic-btn" class="mic-btn" aria-label="Hold to dictate">🎙️</button>
-      </div>
-      <div id="mic-status" class="mic-status" hidden></div>
+      <textarea id="edit-text" rows="5"></textarea>
+      <button id="mic-btn" class="mic-bar" aria-label="Hold to dictate">
+        <span class="mic-icon">🎙️</span>
+        <span class="mic-label">Hold to talk</span>
+        <span class="mic-wave"><i></i><i></i><i></i><i></i><i></i></span>
+      </button>
       <div class="tag-label">What was off?</div>
       <div class="tags" id="edit-tags">
         <button data-tag="tone">Tone</button>

@@ -293,13 +293,15 @@ let mediaRecorder = null;
 let audioChunks = [];
 let recordingStream = null;
 
+function setMicLabel(text) {
+  const label = document.querySelector("#mic-btn .mic-label");
+  if (label) label.textContent = text;
+}
+
 async function startRecording() {
   const btn = $("#mic-btn");
-  const status = $("#mic-status");
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    status.className = "mic-status";
-    status.textContent = "Mic needs HTTPS. Using http:// — switch to HTTPS (Tailscale/Cloudflare).";
-    status.hidden = false;
+    setMicLabel("Mic needs HTTPS");
     return;
   }
   try {
@@ -313,12 +315,10 @@ async function startRecording() {
     mediaRecorder.addEventListener("stop", onRecordingStopped);
     mediaRecorder.start();
     btn.classList.add("recording");
-    status.className = "mic-status active";
-    status.textContent = "🔴 Recording… release to send";
-    status.hidden = false;
+    if (navigator.vibrate) navigator.vibrate(15);
   } catch (err) {
-    status.textContent = "Mic permission denied: " + String(err).slice(0, 80);
-    status.hidden = false;
+    setMicLabel("Mic permission needed");
+    setTimeout(() => setMicLabel("Hold to talk"), 2000);
   }
 }
 
@@ -326,7 +326,8 @@ function stopRecording() {
   if (mediaRecorder && mediaRecorder.state === "recording") {
     mediaRecorder.stop();
   }
-  $("#mic-btn").classList.remove("recording");
+  const btn = $("#mic-btn");
+  btn.classList.remove("recording");
 }
 
 async function onRecordingStopped() {
@@ -334,15 +335,14 @@ async function onRecordingStopped() {
     recordingStream.getTracks().forEach((t) => t.stop());
     recordingStream = null;
   }
-  const status = $("#mic-status");
+  const btn = $("#mic-btn");
   const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
   audioChunks = [];
   if (blob.size < 1000) {
-    status.hidden = true;
     return;
   }
-  status.className = "mic-status transcribing";
-  status.textContent = "⏳ Transcribing…";
+  btn.classList.add("transcribing");
+  setMicLabel("Transcribing…");
   try {
     const form = new FormData();
     const ext = (blob.type.includes("mp4") ? "m4a" : "webm");
@@ -356,12 +356,16 @@ async function onRecordingStopped() {
       ta.value = before + sep + data.text;
       ta.focus();
       ta.setSelectionRange(ta.value.length, ta.value.length);
-      status.hidden = true;
     } else {
-      status.textContent = "Error: " + (data.error || "no text returned");
+      setMicLabel("Error — try again");
+      setTimeout(() => setMicLabel("Hold to talk"), 2000);
     }
   } catch (err) {
-    status.textContent = "Transcribe failed: " + String(err).slice(0, 80);
+    setMicLabel("Failed — try again");
+    setTimeout(() => setMicLabel("Hold to talk"), 2000);
+  } finally {
+    btn.classList.remove("transcribing");
+    setMicLabel("Hold to talk");
   }
 }
 
