@@ -296,6 +296,12 @@ let recordingStream = null;
 async function startRecording() {
   const btn = $("#mic-btn");
   const status = $("#mic-status");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    status.className = "mic-status";
+    status.textContent = "Mic needs HTTPS. Using http:// — switch to HTTPS (Tailscale/Cloudflare).";
+    status.hidden = false;
+    return;
+  }
   try {
     recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"

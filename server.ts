@@ -13,9 +13,46 @@ import {
 import { sendSMS } from "./lib/sms";
 import { logEditFeedback } from "./lib/feedback";
 import { transcribeAudio } from "./lib/transcribe";
+import { isAuthEnabled, verifyPassword, makeToken, verifyToken, cookieHeader, parseCookie } from "./lib/auth";
 import type { CardCreatePayload } from "./lib/types";
 
 const app = new Hono();
+
+app.use("*", async (c, next) => {
+  if (!isAuthEnabled()) return next();
+  const path = c.req.path;
+  if (
+    path === "/login" || path === "/api/login" ||
+    path === "/login.html" || path === "/login.css" || path === "/login.js" ||
+    path === "/api/health" || path === "/manifest.json" || path === "/icon.svg" ||
+    path === "/sw.js"
+  ) return next();
+
+  // Hermes posts cards without a cookie — allow via shared secret header
+  if (path === "/api/cards" && c.req.method === "POST") {
+    const secret = c.req.header("X-Hermes-Secret");
+    if (secret && process.env.HERMES_SECRET && secret === process.env.HERMES_SECRET) return next();
+  }
+
+  const token = parseCookie(c.req.header("Cookie") || null);
+  if (verifyToken(token)) return next();
+
+  if (path.startsWith("/api/")) return c.json({ error: "unauthorized" }, 401);
+  return c.redirect("/login");
+});
+
+app.post("/api/login", async (c) => {
+  const body = (await c.req.json()) as { password?: string };
+  if (!verifyPassword(body.password || "")) return c.json({ error: "wrong password" }, 401);
+  const token = makeToken();
+  c.header("Set-Cookie", cookieHeader(token, c.req.url.startsWith("https://")));
+  return c.json({ ok: true });
+});
+
+app.post("/api/logout", (c) => {
+  c.header("Set-Cookie", `tft_auth=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
+  return c.json({ ok: true });
+});
 
 app.post("/api/cards", async (c) => {
   const payload = (await c.req.json()) as CardCreatePayload;
@@ -154,6 +191,7 @@ app.post("/api/transcribe", async (c) => {
 
 app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
 
+app.get("/login", serveStatic({ path: "./public/login.html" }));
 app.use("/*", serveStatic({ root: "./public" }));
 app.get("/", serveStatic({ path: "./public/index.html" }));
 

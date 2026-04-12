@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f14">
+<title>Sign in · Tasks</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+body { margin: 0; background: #0f0f14; color: #f4f4f8; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.box { max-width: 360px; width: 100%; text-align: center; }
+.logo { width: 64px; height: 64px; border-radius: 14px; background: #5ee6a8; color: #0b2a1c; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; font-weight: 700; }
+h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+p { color: #8b8ba0; font-size: 14px; margin: 0 0 24px; }
+form { display: flex; flex-direction: column; gap: 12px; }
+input { background: #1a1a22; border: 1px solid #2f2f3d; border-radius: 12px; padding: 14px; color: #f4f4f8; font-size: 16px; font-family: inherit; }
+input:focus { outline: none; border-color: #5ee6a8; }
+button { background: #5ee6a8; color: #0b2a1c; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; font-family: inherit; }
+button:active { opacity: 0.85; }
+#err { color: #ff6b6b; font-size: 13px; min-height: 16px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">✓</div>
+  <h1>Tinder for Tasks</h1>
+  <p>Enter your password to continue</p>
+  <form id="f" autocomplete="on">
+    <input type="text" name="username" value="andrew" autocomplete="username" hidden readonly>
+    <input id="pw" type="password" name="password" autocomplete="current-password webauthn" placeholder="Password" required autofocus>
+    <button type="submit">Sign in</button>
+    <div id="err"></div>
+  </form>
+</div>
+<script>
+document.getElementById("f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = document.getElementById("pw").value;
+  const err = document.getElementById("err");
+  err.textContent = "";
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: pw }),
+  });
+  if (res.ok) {
+    location.href = "/";
+  } else {
+    err.textContent = "Wrong password";
+  }
+});
+</script>
+</body>
+</html>
