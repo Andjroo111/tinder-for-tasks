@@ -250,6 +250,7 @@ function openEdit(card) {
 
   $("#edit-cancel").onclick = () => {
     sheet.hidden = true;
+    releaseStream();
     const topEl = stackEl.querySelector(".card");
     if (topEl) topEl.style.transform = "";
   };
@@ -259,6 +260,7 @@ function openEdit(card) {
     const edited = textEl.value.trim();
     if (!edited) return;
     sheet.hidden = true;
+    releaseStream();
     const res = await api(`/api/cards/${card.cardId}/edit`, {
       method: "POST",
       body: JSON.stringify({ editedDraft: edited, tags }),
@@ -298,6 +300,19 @@ function setMicLabel(text) {
   if (label) label.textContent = text;
 }
 
+async function ensureStream() {
+  if (recordingStream && recordingStream.active) return recordingStream;
+  recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  return recordingStream;
+}
+
+function releaseStream() {
+  if (recordingStream) {
+    recordingStream.getTracks().forEach((t) => t.stop());
+    recordingStream = null;
+  }
+}
+
 async function startRecording() {
   const btn = $("#mic-btn");
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -305,11 +320,11 @@ async function startRecording() {
     return;
   }
   try {
-    recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await ensureStream();
     const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
                : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4"
                : "";
-    mediaRecorder = mime ? new MediaRecorder(recordingStream, { mimeType: mime }) : new MediaRecorder(recordingStream);
+    mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
     audioChunks = [];
     mediaRecorder.addEventListener("dataavailable", (e) => e.data.size > 0 && audioChunks.push(e.data));
     mediaRecorder.addEventListener("stop", onRecordingStopped);
@@ -331,10 +346,6 @@ function stopRecording() {
 }
 
 async function onRecordingStopped() {
-  if (recordingStream) {
-    recordingStream.getTracks().forEach((t) => t.stop());
-    recordingStream = null;
-  }
   const btn = $("#mic-btn");
   const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
   audioChunks = [];

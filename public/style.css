@@ -234,6 +234,7 @@ html, body {
   transition: background 0.2s, border-color 0.2s, transform 0.1s;
   touch-action: none;
 }
+.mic-bar > * { pointer-events: none; }
 .mic-bar .mic-icon { font-size: 22px; transition: transform 0.2s; }
 .mic-bar .mic-label { transition: opacity 0.2s; }
 .mic-bar .mic-wave { display: none; gap: 3px; align-items: center; height: 24px; }
