@@ -1,13 +1,23 @@
 import { loadConfig } from "./config";
 
-export async function sendSMS(phone: string, message: string): Promise<void> {
+export async function sendSMS(
+  phone: string,
+  message: string,
+  contactId?: string
+): Promise<void> {
   const cfg = loadConfig();
+  const routeContactId = process.env.SMS_TEST_ROUTE_CONTACT_ID;
+  const effectiveContactId = routeContactId || contactId;
+
   if (cfg.ghl?.dryRun) {
-    console.log(`[DRY-RUN SMS] ${phone}: ${message}`);
+    console.log(`[DRY-RUN SMS] phone=${phone} contactId=${effectiveContactId}: ${message}`);
     return;
   }
-  if (!cfg.ghl?.apiKey || !cfg.ghl?.locationId) {
-    throw new Error("GHL config missing (apiKey, locationId)");
+  if (!cfg.ghl?.apiKey) throw new Error("GHL_API_KEY missing");
+  if (!effectiveContactId) throw new Error("No contactId and no SMS_TEST_ROUTE_CONTACT_ID set — refusing to send without a target contact");
+
+  if (routeContactId) {
+    console.log(`[TEST ROUTE] Redirecting SMS intended for contactId=${contactId} (phone=${phone}) → test contactId=${routeContactId}`);
   }
 
   const res = await fetch("https://services.leadconnectorhq.com/conversations/messages", {
@@ -19,7 +29,7 @@ export async function sendSMS(phone: string, message: string): Promise<void> {
     },
     body: JSON.stringify({
       type: "SMS",
-      contactId: phone,
+      contactId: effectiveContactId,
       message,
     }),
   });

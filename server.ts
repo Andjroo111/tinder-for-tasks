@@ -62,7 +62,7 @@ app.post("/api/cards", async (c) => {
 
   if (payload.tier === 1 || payload.tier === 2) {
     try {
-      await sendSMS(payload.phone, payload.draftResponse);
+      await sendSMS(payload.phone, payload.draftResponse, payload.contactId);
       await logAutoSend({
         contactId: payload.contactId,
         contactName: payload.contactName,
@@ -91,7 +91,7 @@ app.post("/api/cards/:id/approve", async (c) => {
   const card = await getCard(c.req.param("id"));
   if (!card) return c.json({ error: "not found" }, 404);
   try {
-    await sendSMS(card.phone, card.draftResponse);
+    await sendSMS(card.phone, card.draftResponse, card.contactId);
     await updateStatus(card.cardId, "sent");
     return c.json({ sent: true });
   } catch (err) {
@@ -116,7 +116,7 @@ app.post("/api/cards/:id/edit", async (c) => {
   if (!body.editedDraft) return c.json({ error: "editedDraft required" }, 400);
 
   try {
-    await sendSMS(card.phone, body.editedDraft);
+    await sendSMS(card.phone, body.editedDraft, card.contactId);
     await logEditFeedback({
       cardId: card.cardId,
       contactName: card.contactName,
