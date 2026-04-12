@@ -509,6 +509,10 @@ function attachMicButton() {
 attachMicButton();
 
 $("#view-autos").addEventListener("click", openAutos);
+$("#reseed-btn").addEventListener("click", async () => {
+  const res = await api("/api/dev/reseed", { method: "POST" });
+  if (res.ok) load();
+});
 $("#autos-close").addEventListener("click", () => { $("#autos-sheet").hidden = true; });
 $("#refresh-btn").addEventListener("click", load);
 

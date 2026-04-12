@@ -209,6 +209,15 @@ app.post("/api/transcribe", async (c) => {
 
 app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
 
+app.post("/api/dev/reseed", async (c) => {
+  const { spawnSync } = await import("child_process");
+  try {
+    await Bun.write("./data/cards.json", "{\"cards\":[]}");
+  } catch {}
+  const r = spawnSync("bun", ["scripts/seed-many.ts"], { cwd: "." });
+  return c.json({ ok: r.status === 0, output: r.stdout?.toString().trim() });
+});
+
 // Nuke-cache escape hatch — visit https://tasks.gooddogzkc.com/reset from any browser.
 // Uses Clear-Site-Data HTTP header — browser clears everything even if SW is stuck.
 app.get("/reset", (c) => {
