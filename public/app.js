@@ -289,6 +289,89 @@ async function openAutos() {
   sheet.hidden = false;
 }
 
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStream = null;
+
+async function startRecording() {
+  const btn = $("#mic-btn");
+  const status = $("#mic-status");
+  try {
+    recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+               : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4"
+               : "";
+    mediaRecorder = mime ? new MediaRecorder(recordingStream, { mimeType: mime }) : new MediaRecorder(recordingStream);
+    audioChunks = [];
+    mediaRecorder.addEventListener("dataavailable", (e) => e.data.size > 0 && audioChunks.push(e.data));
+    mediaRecorder.addEventListener("stop", onRecordingStopped);
+    mediaRecorder.start();
+    btn.classList.add("recording");
+    status.className = "mic-status active";
+    status.textContent = "🔴 Recording… release to send";
+    status.hidden = false;
+  } catch (err) {
+    status.textContent = "Mic permission denied: " + String(err).slice(0, 80);
+    status.hidden = false;
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+  }
+  $("#mic-btn").classList.remove("recording");
+}
+
+async function onRecordingStopped() {
+  if (recordingStream) {
+    recordingStream.getTracks().forEach((t) => t.stop());
+    recordingStream = null;
+  }
+  const status = $("#mic-status");
+  const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
+  audioChunks = [];
+  if (blob.size < 1000) {
+    status.hidden = true;
+    return;
+  }
+  status.className = "mic-status transcribing";
+  status.textContent = "⏳ Transcribing…";
+  try {
+    const form = new FormData();
+    const ext = (blob.type.includes("mp4") ? "m4a" : "webm");
+    form.append("audio", blob, `dictation.${ext}`);
+    const res = await fetch("/api/transcribe", { method: "POST", body: form });
+    const data = await res.json();
+    if (data.text) {
+      const ta = $("#edit-text");
+      const before = ta.value;
+      const sep = before && !/\s$/.test(before) ? " " : "";
+      ta.value = before + sep + data.text;
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      status.hidden = true;
+    } else {
+      status.textContent = "Error: " + (data.error || "no text returned");
+    }
+  } catch (err) {
+    status.textContent = "Transcribe failed: " + String(err).slice(0, 80);
+  }
+}
+
+function attachMicButton() {
+  const btn = $("#mic-btn");
+  if (btn._attached) return;
+  btn._attached = true;
+  const down = (e) => { e.preventDefault(); startRecording(); };
+  const up = (e) => { e.preventDefault(); stopRecording(); };
+  btn.addEventListener("pointerdown", down);
+  btn.addEventListener("pointerup", up);
+  btn.addEventListener("pointercancel", up);
+  btn.addEventListener("pointerleave", (e) => { if (btn.classList.contains("recording")) up(e); });
+}
+attachMicButton();
+
 $("#view-autos").addEventListener("click", openAutos);
 $("#autos-close").addEventListener("click", () => { $("#autos-sheet").hidden = true; });
 $("#refresh-btn").addEventListener("click", load);

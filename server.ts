@@ -12,6 +12,7 @@ import {
 } from "./lib/cards";
 import { sendSMS } from "./lib/sms";
 import { logEditFeedback } from "./lib/feedback";
+import { transcribeAudio } from "./lib/transcribe";
 import type { CardCreatePayload } from "./lib/types";
 
 const app = new Hono();
@@ -139,7 +140,19 @@ app.get("/api/dashboard", async (c) => {
   });
 });
 
-app.get("/api/health", (c) => c.json({ ok: true }));
+app.post("/api/transcribe", async (c) => {
+  try {
+    const form = await c.req.formData();
+    const file = form.get("audio") as File | null;
+    if (!file) return c.json({ error: "audio file required" }, 400);
+    const text = await transcribeAudio(file, file.name || "audio.webm");
+    return c.json({ text });
+  } catch (err) {
+    return c.json({ error: String(err) }, 500);
+  }
+});
+
+app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
 
 app.use("/*", serveStatic({ root: "./public" }));
 app.get("/", serveStatic({ path: "./public/index.html" }));
