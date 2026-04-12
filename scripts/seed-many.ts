@@ -54,14 +54,16 @@ await upsertCard({
   suggestedSlots: [new Date(tue.setHours(13, 0, 0, 0)).toISOString()],
 });
 
-// Card 3 — Tier 3 new lead (for swipe left / skip test)
+// Card 3 — Tier 3 new lead from form submission (intro card pattern)
 await upsertCard({
   contactId: "test-3-mike",
   contactName: "Mike Johnson",
+  dogName: "Duke",
   phone: "+18165551111",
   triggerEvent: "new_lead",
-  clientMessage: "Hey, interested in training for my dog!",
-  draftResponse: "Thanks for reaching out! What's your dog's name and what are the main behaviors you'd like to work on?",
+  clientMessage: "Form submission — Duke (2yr Lab), goals: leash pulling, door greeting",
+  draftResponse: "Hey Mike, thanks for reaching out about Duke! I'd love to chat about the leash pulling and door greeting — do you have 10-15 min this week for a quick call so I can ask a few questions and walk you through how I'd approach it?",
+  reasoning: "Form submission with dog name + specific goals — lead with empathy on the behaviors they listed, propose a consultation call.",
   tier: 3,
 });
 

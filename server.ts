@@ -191,6 +191,14 @@ app.post("/api/transcribe", async (c) => {
 
 app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
 
+// Prevent stale caches for HTML/JS/CSS so refresh pulls new versions
+app.use("/*", async (c, next) => {
+  await next();
+  const p = c.req.path;
+  if (p === "/" || p.endsWith(".html") || p.endsWith(".js") || p.endsWith(".css") || p === "/manifest.json") {
+    c.header("Cache-Control", "no-cache, no-store, must-revalidate");
+  }
+});
 app.get("/login", serveStatic({ path: "./public/login.html" }));
 app.use("/*", serveStatic({ root: "./public" }));
 app.get("/", serveStatic({ path: "./public/index.html" }));

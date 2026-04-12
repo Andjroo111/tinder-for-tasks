@@ -306,10 +306,12 @@ html, body {
 .auto-entry .time { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
 #toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  position: fixed; top: calc(env(safe-area-inset-top) + 64px);
+  left: 50%; transform: translateX(-50%);
   background: var(--surface-2); border: 1px solid var(--border);
   padding: 10px 18px; border-radius: 20px; font-size: 13px;
   z-index: 100; animation: fade 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }

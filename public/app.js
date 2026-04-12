@@ -108,9 +108,12 @@ function buildCard(card) {
 }
 
 function renderCalDay(day) {
+  const d = new Date(day.date + "T00:00:00");
+  const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+  const pretty = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   return `<div class="cal-day">
     <div class="cal-day-head">
-      <span>${day.date}</span>
+      <span><b>${weekday}</b> · ${pretty}</span>
       ${day.note ? `<span class="cal-day-note">${escape(day.note)}</span>` : ""}
     </div>
     ${day.blocks.map((b) => `
@@ -315,8 +318,12 @@ function releaseStream() {
 
 async function startRecording() {
   const btn = $("#mic-btn");
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  if (!window.isSecureContext) {
     setMicLabel("Mic needs HTTPS");
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setMicLabel("Mic API unavailable in this browser");
     return;
   }
   try {
@@ -332,8 +339,9 @@ async function startRecording() {
     btn.classList.add("recording");
     if (navigator.vibrate) navigator.vibrate(15);
   } catch (err) {
-    setMicLabel("Mic permission needed");
-    setTimeout(() => setMicLabel("Hold to talk"), 2000);
+    const msg = String(err).slice(0, 60);
+    setMicLabel("Mic error: " + msg);
+    setTimeout(() => setMicLabel("Hold to talk"), 3000);
   }
 }
 
