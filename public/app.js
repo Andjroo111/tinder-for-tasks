@@ -182,11 +182,11 @@ function attachGestures(el, card) {
     const threshold = 100;
     const intensity = Math.min(Math.max(Math.abs(dx), Math.abs(dy)) / threshold, 1);
     if (dx > 40 && Math.abs(dy) < Math.abs(dx)) {
-      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(94,230,168,${intensity * 0.9})`;
+      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(34,197,94,${intensity * 0.9})`;
     } else if (dx < -40 && Math.abs(dy) < Math.abs(dx)) {
-      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(255,107,107,${intensity * 0.9})`;
+      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(239,68,68,${intensity * 0.9})`;
     } else if (dy > 40) {
-      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(255,184,77,${intensity * 0.9})`;
+      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(249,115,22,${intensity * 0.9})`;
     } else {
       el.style.boxShadow = "";
     }
@@ -227,13 +227,13 @@ function attachGestures(el, card) {
 
 async function approve(card) {
   const res = await api(`/api/cards/${card.cardId}/approve`, { method: "POST" });
-  if (res.sent) { toast("Sent"); load(); }
-  else toast(res.error || "Failed");
+  if (res.sent) { toast("Sent", ""); load(); }
+  else toast(res.error || "Failed", "red");
 }
 
 async function skip(card) {
   await api(`/api/cards/${card.cardId}/skip`, { method: "POST" });
-  toast("Skipped");
+  toast("Skipped", "red");
   load();
 }
 
@@ -289,7 +289,7 @@ function openSnooze(card) {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    toast("Snoozed");
+    toast("Snoozed", "orange");
     load();
   };
 }
@@ -478,17 +478,71 @@ $("#view-autos").addEventListener("click", openAutos);
 $("#autos-close").addEventListener("click", () => { $("#autos-sheet").hidden = true; });
 $("#refresh-btn").addEventListener("click", load);
 
-function toast(msg) {
+function toast(msg, tone = "") {
   const el = $("#toast");
   el.textContent = msg;
+  el.className = tone;
   el.hidden = false;
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { el.hidden = true; }, 1800);
+  toast._t = setTimeout(() => { el.hidden = true; el.className = ""; }, 1600);
 }
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
+
+const TUT_STEPS = [
+  { caption: "Swipe RIGHT to approve & send", cardClass: "swipe-right", handClass: "move-right" },
+  { caption: "Swipe LEFT to skip", cardClass: "swipe-left", handClass: "move-left" },
+  { caption: "Swipe DOWN to snooze", cardClass: "swipe-down", handClass: "move-down" },
+  { caption: "Press & hold to edit", cardClass: "press-hold", handClass: "pressing" },
+];
+
+function runTutorial() {
+  const tut = $("#tutorial");
+  const card = $("#tut-card");
+  const hand = $("#tut-hand");
+  const caption = $("#tut-caption");
+  const dots = tut.querySelectorAll(".dot");
+  let step = 0;
+  let playing = false;
+
+  function play() {
+    if (playing) return;
+    playing = true;
+    card.className = "tut-card";
+    hand.className = "tut-hand";
+    dots.forEach((d, i) => d.classList.toggle("active", i === step));
+    caption.textContent = TUT_STEPS[step].caption;
+    setTimeout(() => {
+      card.classList.add(TUT_STEPS[step].cardClass);
+      hand.classList.add(TUT_STEPS[step].handClass);
+      playing = false;
+    }, 200);
+  }
+
+  $("#tut-skip").onclick = close;
+  $("#tut-next").onclick = () => {
+    step++;
+    if (step >= TUT_STEPS.length) return close();
+    play();
+  };
+
+  function close() {
+    tut.hidden = true;
+    try { localStorage.setItem("tft_tutorial_seen", "1"); } catch (e) {}
+  }
+
+  tut.hidden = false;
+  play();
+  const interval = setInterval(() => { if (tut.hidden) clearInterval(interval); else play(); }, 2400);
+}
+
+try {
+  if (!localStorage.getItem("tft_tutorial_seen")) {
+    runTutorial();
+  }
+} catch (e) {}
 
 load();
 setInterval(load, 30000);
