@@ -231,8 +231,35 @@ async function skip(card) {
   load();
 }
 
+function previewSnoozeTime(hour) {
+  const d = new Date();
+  d.setHours(hour, 0, 0, 0);
+  if (d.getTime() <= Date.now() + 15 * 60000) d.setDate(d.getDate() + 1);
+  const sameDay = d.toDateString() === new Date().toDateString();
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }).replace(":00 ", " ");
+  return sameDay ? time : `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
+}
+
+function updateSnoozeLabels() {
+  const now = new Date();
+  const laterTime = new Date(now.getTime() + 90 * 60000);
+  const laterLabel = laterTime.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }).replace(":00 ", " ");
+  const setLabel = (id, prefix, time) => {
+    const el = $(id);
+    if (el) el.innerHTML = `${prefix}<span class="snooze-time">${time}</span>`;
+  };
+  setLabel("#snooze-later", "In a bit", laterLabel);
+  const hour = now.getHours();
+  $("#snooze-afternoon").hidden = hour >= 14;
+  $("#snooze-evening").hidden = hour >= 18;
+  if (!$("#snooze-afternoon").hidden) setLabel("#snooze-afternoon", "This afternoon", previewSnoozeTime(14));
+  if (!$("#snooze-evening").hidden) setLabel("#snooze-evening", "This evening", previewSnoozeTime(18));
+  setLabel("#snooze-tomorrow", "Tomorrow morning", previewSnoozeTime(8));
+}
+
 function openSnooze(card) {
   const sheet = $("#snooze-sheet");
+  updateSnoozeLabels();
   sheet.hidden = false;
   sheet.onclick = async (e) => {
     const btn = e.target.closest("[data-snooze]");

@@ -201,6 +201,11 @@ html, body {
 }
 .sheet-inner button.cancel { color: var(--muted); background: transparent; border-color: transparent; }
 .sheet-inner button.primary { background: var(--accent); color: #0b2a1c; border-color: var(--accent); }
+.sheet-inner button[hidden] { display: none !important; }
+.snooze-time {
+  float: right; color: var(--muted); font-weight: 400;
+  font-size: 13px; padding-right: 4px;
+}
 .custom-snooze {
   display: flex !important; flex-direction: row !important; gap: 0;
   align-items: stretch;

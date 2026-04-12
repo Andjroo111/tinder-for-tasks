@@ -43,11 +43,11 @@
 
   <div id="snooze-sheet" class="sheet" hidden>
     <div class="sheet-inner">
-      <h3>Snooze for…</h3>
-      <button data-snooze="1h">1 hour</button>
-      <button data-snooze="3h">3 hours</button>
-      <button data-snooze="tonight">Tonight 6pm</button>
-      <button data-snooze="tomorrow">Tomorrow 8am</button>
+      <h3>Remind me…</h3>
+      <button data-snooze="later" id="snooze-later">In a bit</button>
+      <button data-snooze="afternoon" id="snooze-afternoon">This afternoon</button>
+      <button data-snooze="evening" id="snooze-evening">This evening</button>
+      <button data-snooze="tomorrow" id="snooze-tomorrow">Tomorrow morning</button>
       <div class="custom-snooze">
         <input id="snooze-custom-hours" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="e.g. 12" aria-label="Custom hours">
         <span class="unit">hrs</span>

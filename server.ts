@@ -134,21 +134,26 @@ app.post("/api/cards/:id/edit", async (c) => {
   }
 });
 
+function nextTime(hour: number, minute = 0): Date {
+  const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  if (d.getTime() <= Date.now() + 15 * 60000) d.setDate(d.getDate() + 1);
+  return d;
+}
+
 app.post("/api/cards/:id/snooze", async (c) => {
   const body = (await c.req.json()) as { duration: string; hours?: number };
   const now = new Date();
   let until: Date;
   switch (body.duration) {
-    case "1h":
-      until = new Date(now.getTime() + 60 * 60 * 1000);
+    case "later":
+      until = new Date(now.getTime() + 90 * 60 * 1000);
       break;
-    case "3h":
-      until = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    case "afternoon":
+      until = nextTime(14, 0);
       break;
-    case "tonight":
-      until = new Date(now);
-      until.setHours(18, 0, 0, 0);
-      if (until.getTime() <= now.getTime()) until.setDate(until.getDate() + 1);
+    case "evening":
+      until = nextTime(18, 0);
       break;
     case "tomorrow":
       until = new Date(now);
@@ -159,6 +164,10 @@ app.post("/api/cards/:id/snooze", async (c) => {
       if (!body.hours || body.hours < 1 || body.hours > 168) return c.json({ error: "hours must be 1-168" }, 400);
       until = new Date(now.getTime() + body.hours * 60 * 60 * 1000);
       break;
+    // legacy aliases
+    case "1h": until = new Date(now.getTime() + 60 * 60 * 1000); break;
+    case "3h": until = new Date(now.getTime() + 3 * 60 * 60 * 1000); break;
+    case "tonight": until = nextTime(18, 0); break;
     default:
       return c.json({ error: "invalid duration" }, 400);
   }
