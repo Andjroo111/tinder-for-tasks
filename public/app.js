@@ -520,9 +520,12 @@ $("#mode-toggle").addEventListener("click", async () => {
   const btn = $("#mode-toggle");
   const current = btn.dataset.mode;
   const target = current === "live" ? "test" : "live";
+  const testRouteOn = btn.dataset.testAvailable === "1";
   const msg = target === "live"
-    ? "Switch to LIVE mode?\n\nSMS will go to REAL CLIENTS. Be sure."
-    : "Switch back to TEST mode?\n\nAll SMS will redirect to your own phone.";
+    ? (testRouteOn
+        ? "Switch to LIVE?\n\nSMS will actually send — currently routed to your phone (test contact)."
+        : "Switch to LIVE?\n\n⚠ SMS will go to REAL CLIENTS. No test route is configured.")
+    : "Switch to TEST mode?\n\nNo SMS will send at all — pure dry-run.";
   if (!confirm(msg)) return;
   const res = await api("/api/mode", { method: "POST", body: JSON.stringify({ mode: target }) });
   if (res.error) { alert(res.error); return; }

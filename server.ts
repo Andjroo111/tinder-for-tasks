@@ -219,9 +219,6 @@ app.get("/api/mode", async (c) => {
 app.post("/api/mode", async (c) => {
   const body = (await c.req.json()) as { mode: "live" | "test" };
   if (body.mode !== "live" && body.mode !== "test") return c.json({ error: "invalid mode" }, 400);
-  if (body.mode === "test" && !process.env.SMS_TEST_ROUTE_CONTACT_ID) {
-    return c.json({ error: "SMS_TEST_ROUTE_CONTACT_ID not configured — can't enter test mode" }, 400);
-  }
   await setMode(body.mode);
   return c.json({ mode: body.mode });
 });

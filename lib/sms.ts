@@ -9,20 +9,24 @@ export async function sendSMS(
   const cfg = loadConfig();
   const mode = await getMode();
   const testContactId = process.env.SMS_TEST_ROUTE_CONTACT_ID;
-  const useTestRoute = mode === "test" && !!testContactId;
-  const effectiveContactId = useTestRoute ? testContactId : contactId;
 
-  if (cfg.ghl?.dryRun) {
-    console.log(`[DRY-RUN SMS] mode=${mode} phone=${phone} contactId=${effectiveContactId}: ${message}`);
+  // TEST mode = nothing sends. Full dry-run. Safest state.
+  if (mode === "test" || cfg.ghl?.dryRun) {
+    console.log(`[TEST — NOT SENT] phone=${phone} contactId=${contactId}: ${message}`);
     return;
   }
-  if (!cfg.ghl?.apiKey) throw new Error("GHL_API_KEY missing");
-  if (!effectiveContactId) throw new Error(`No contactId available (mode=${mode}, test route set=${!!testContactId})`);
 
-  if (useTestRoute) {
-    console.log(`[TEST MODE] Redirecting SMS intended for contactId=${contactId} (phone=${phone}) → test contactId=${testContactId}`);
-  } else if (mode === "live") {
-    console.log(`[LIVE] Sending SMS to real contactId=${contactId} (phone=${phone})`);
+  // LIVE mode: if test route contactId is configured, all sends redirect there.
+  // Remove SMS_TEST_ROUTE_CONTACT_ID from the environment to release to real clients.
+  const effectiveContactId = testContactId || contactId;
+
+  if (!cfg.ghl?.apiKey) throw new Error("GHL_API_KEY missing");
+  if (!effectiveContactId) throw new Error("No contactId available for LIVE send");
+
+  if (testContactId) {
+    console.log(`[LIVE — routed to test contact] real contactId=${contactId} phone=${phone} → test contactId=${testContactId}`);
+  } else {
+    console.log(`[LIVE — real client] contactId=${contactId} phone=${phone}`);
   }
 
   const res = await fetch("https://services.leadconnectorhq.com/conversations/messages", {
