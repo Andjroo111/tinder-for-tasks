@@ -236,15 +236,16 @@ function attachGestures(el, card) {
 }
 
 async function approve(card) {
+  stamp(card, "green");
   const res = await api(`/api/cards/${card.cardId}/approve`, { method: "POST" });
-  if (res.sent) { toast("Sent", ""); load(); }
-  else toast(res.error || "Failed", "red");
+  if (res.sent) { setTimeout(load, 300); }
+  else { alert(res.error || "Failed to send"); load(); }
 }
 
 async function skip(card) {
+  stamp(card, "red");
   await api(`/api/cards/${card.cardId}/skip`, { method: "POST" });
-  toast("Skipped", "red");
-  load();
+  setTimeout(load, 300);
 }
 
 function previewSnoozeTime(hour) {
@@ -318,13 +319,12 @@ function openSnooze(card) {
       payload.hours = hours;
     }
     sheet.hidden = true;
-    $("#snooze-custom-hours").value = "";
+    stamp(card, "orange");
     await api(`/api/cards/${card.cardId}/snooze`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    toast("Snoozed", "orange");
-    load();
+    setTimeout(load, 300);
   };
 }
 
@@ -354,12 +354,13 @@ function openEdit(card) {
     if (!edited) return;
     sheet.hidden = true;
     releaseStream();
+    stamp(card, "green");
     const res = await api(`/api/cards/${card.cardId}/edit`, {
       method: "POST",
       body: JSON.stringify({ editedDraft: edited, tags }),
     });
-    if (res.sent) { toast("Sent (edited)"); load(); }
-    else toast(res.error || "Failed");
+    if (res.sent) setTimeout(load, 300);
+    else { alert(res.error || "Failed"); load(); }
   };
 }
 
@@ -511,14 +512,22 @@ $("#view-autos").addEventListener("click", openAutos);
 $("#autos-close").addEventListener("click", () => { $("#autos-sheet").hidden = true; });
 $("#refresh-btn").addEventListener("click", load);
 
-function toast(msg, tone = "") {
-  const el = $("#toast");
+const STAMPS = {
+  green:  ["SENT 🚀", "BOOM!", "YEET", "SHIPPED", "DELIVERED", "NAILED IT", "LET'S GO"],
+  red:    ["NOPE", "PASS", "SKIPPED", "BYE 👋", "HARD PASS", "NEXT", "NAH"],
+  orange: ["ZZZ 😴", "LATER", "SNOOZED", "CATCH YA", "TALK SOON", "ON ICE"],
+};
+function stamp(card, tone) {
+  const list = STAMPS[tone] || STAMPS.green;
+  const msg = list[Math.floor(Math.random() * list.length)];
+  const cardEl = document.querySelector(`.card[data-card-id="${card.cardId}"]`);
+  if (!cardEl) return;
+  const el = document.createElement("div");
+  el.className = `stamp ${tone}`;
   el.textContent = msg;
-  el.className = tone;
-  el.hidden = false;
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => { el.hidden = true; el.className = ""; }, 1600);
+  cardEl.appendChild(el);
 }
+function toast() {} // legacy no-op
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
