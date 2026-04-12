@@ -81,15 +81,15 @@ html, body {
   background: var(--surface);
 }
 .card.tier-4 {
-  border-color: var(--warn);
+  border-color: var(--accent);
   border-width: 2px;
 }
 .card.tier-4::before {
-  content: "⚠ NEEDS JUDGMENT";
+  content: "NEEDS JUDGMENT";
   position: absolute; top: 0; left: 0; right: 0;
-  background: var(--warn); color: #1a1a00;
-  font-size: 10px; letter-spacing: 1.5px; font-weight: 700;
-  padding: 4px; text-align: center; z-index: 1;
+  background: var(--accent); color: #0b2a1c;
+  font-size: 11px; letter-spacing: 1.5px; font-weight: 700;
+  padding: 5px; text-align: center; z-index: 1;
 }
 .card.tier-4 .card-body { padding-top: 36px; }
 .card.swiping { transition: none; }
@@ -228,17 +228,19 @@ html, body {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px 16px 14px;
+  display: flex; flex-direction: column; gap: 16px;
 }
+.custom-snooze-slider #snooze-custom-hours { margin: 8px 0 4px; }
 .slider-head { display: flex; justify-content: space-between; align-items: center; }
 .slider-label { font-size: 14px; font-weight: 500; }
 .slider-value { color: var(--accent); font-weight: 600; font-size: 15px; }
 #snooze-custom-hours[type="range"] {
   -webkit-appearance: none; appearance: none;
   width: 100%; height: 6px;
-  background: var(--border); border-radius: 3px;
-  padding: 0 !important; margin: 0; outline: none;
+  background: linear-gradient(to right, #22c55e 0%, #f97316 100%);
+  border-radius: 3px;
+  padding: 0 !important; margin: 8px 0 4px; outline: none;
 }
 #snooze-custom-hours[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
@@ -364,20 +366,28 @@ html, body {
   gap: 8px; margin-bottom: 16px;
 }
 .tags button {
-  height: 54px !important;
-  padding: 6px 4px !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  line-height: 1.25 !important;
-  display: flex !important;
+  height: 54px;
+  padding: 6px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  display: flex;
   align-items: center; justify-content: center;
   text-align: center;
   white-space: normal;
   word-break: break-word;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .tags button.active {
-  background: var(--accent) !important; color: #0b2a1c !important;
-  border-color: var(--accent) !important;
+  background: var(--accent);
+  color: #0b2a1c;
+  border-color: var(--accent);
 }
 .sheet-actions { display: flex; gap: 10px; }
 .sheet-actions button { flex: 1; }
