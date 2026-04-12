@@ -209,29 +209,34 @@ app.post("/api/transcribe", async (c) => {
 
 app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
 
-// Nuke-cache escape hatch — visit https://tasks.gooddogzkc.com/reset from any browser
+// Nuke-cache escape hatch — visit https://tasks.gooddogzkc.com/reset from any browser.
+// Uses Clear-Site-Data HTTP header — browser clears everything even if SW is stuck.
 app.get("/reset", (c) => {
   c.header("Cache-Control", "no-store");
-  return c.html(`<!DOCTYPE html><html><body style="background:#0f0f14;color:#f4f4f8;font-family:system-ui;padding:40px;text-align:center">
-<h2>Resetting…</h2>
-<p id="status">Working</p>
+  c.header("Clear-Site-Data", '"cache", "cookies", "storage", "executionContexts"');
+  return c.html(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reset</title></head>
+<body style="background:#0f0f14;color:#f4f4f8;font-family:system-ui;padding:40px;text-align:center;margin:0;min-height:100vh">
+<div style="max-width:320px;margin:60px auto">
+  <div style="font-size:48px;margin-bottom:20px">🧹</div>
+  <h2 style="margin:0 0 16px">Cache cleared</h2>
+  <p id="status" style="color:#8b8ba0;margin:0 0 24px">Finishing up…</p>
+  <a href="/login?fresh=1" style="display:inline-block;background:#22c55e;color:#0b2a1c;padding:14px 28px;border-radius:12px;text-decoration:none;font-weight:700">Open app →</a>
+</div>
 <script>
 (async () => {
-  const s = document.getElementById("status");
   try {
     if ("serviceWorker" in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations();
       for (const r of regs) await r.unregister();
-      s.textContent = "Unregistered " + regs.length + " service worker(s). ";
     }
     if (window.caches) {
       const names = await caches.keys();
       await Promise.all(names.map((n) => caches.delete(n)));
-      s.textContent += "Cleared " + names.length + " cache(s). ";
     }
-    s.textContent += "Done! Reloading in 2s…";
-    setTimeout(() => location.href = "/", 2000);
-  } catch (e) { s.textContent = "Error: " + e.message; }
+    try { localStorage.clear(); sessionStorage.clear(); } catch(e){}
+    document.getElementById("status").textContent = "All clear — tap below to sign in.";
+  } catch (e) { document.getElementById("status").textContent = "Reset ok — tap below."; }
 })();
 </script></body></html>`);
 });
