@@ -178,16 +178,22 @@ function attachGestures(el, card) {
     }
     const rot = dx / 20;
     el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
-    // Color tint based on drag direction
+    // Full-card color fill based on drag direction
     const threshold = 100;
     const intensity = Math.min(Math.max(Math.abs(dx), Math.abs(dy)) / threshold, 1);
-    if (dx > 40 && Math.abs(dy) < Math.abs(dx)) {
-      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(34,197,94,${intensity * 0.9})`;
-    } else if (dx < -40 && Math.abs(dy) < Math.abs(dx)) {
-      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(239,68,68,${intensity * 0.9})`;
-    } else if (dy > 40) {
-      el.style.boxShadow = `0 0 0 ${2 + intensity * 4}px rgba(249,115,22,${intensity * 0.9})`;
+    let color = null;
+    if (dx > 40 && Math.abs(dy) < Math.abs(dx)) color = [34, 197, 94];
+    else if (dx < -40 && Math.abs(dy) < Math.abs(dx)) color = [239, 68, 68];
+    else if (dy > 40) color = [249, 115, 22];
+
+    if (color) {
+      const [r, g, b] = color;
+      el.style.backgroundColor = `rgba(${r},${g},${b},${0.2 + intensity * 0.7})`;
+      el.style.borderColor = `rgba(${r},${g},${b},1)`;
+      el.style.boxShadow = `0 0 ${20 + intensity * 40}px rgba(${r},${g},${b},${intensity * 0.6})`;
     } else {
+      el.style.backgroundColor = "";
+      el.style.borderColor = "";
       el.style.boxShadow = "";
     }
   });
@@ -213,6 +219,8 @@ function attachGestures(el, card) {
     } else {
       el.style.transform = "";
       el.style.boxShadow = "";
+      el.style.backgroundColor = "";
+      el.style.borderColor = "";
     }
   });
 
@@ -221,6 +229,8 @@ function attachGestures(el, card) {
     if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
     el.style.transform = "";
     el.style.boxShadow = "";
+    el.style.backgroundColor = "";
+    el.style.borderColor = "";
     el.classList.remove("swiping");
   });
 }
@@ -283,7 +293,8 @@ function openSnooze(card) {
     valEl.textContent = v;
     const t = (v - 1) / (72 - 1);
     const color = lerpColor(t);
-    submitBtn.style.background = color;
+    // Button gets gradient from green→current position color
+    submitBtn.style.background = `linear-gradient(to right, #22c55e 0%, ${color} 100%)`;
     submitBtn.style.borderColor = color;
     valEl.style.color = color;
   };
@@ -440,7 +451,6 @@ async function onRecordingStopped() {
     return;
   }
   btn.classList.add("transcribing");
-  setMicLabel("Transcribing…");
   try {
     const form = new FormData();
     const ext = (blob.type.includes("mp4") ? "m4a" : "webm");
