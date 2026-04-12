@@ -1,6 +1,13 @@
-self.addEventListener("install", (e) => self.skipWaiting());
-self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
-// Network-first, no cache
+// Self-unregistering service worker — pure network passthrough.
+// If you ever see stale behavior, visit /unregister-sw to nuke caches.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", async (e) => {
+  e.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.map((n) => caches.delete(n)));
+    await self.clients.claim();
+  })());
+});
 self.addEventListener("fetch", (e) => {
-  e.respondWith(fetch(e.request).catch(() => new Response("offline", { status: 503 })));
+  e.respondWith(fetch(e.request, { cache: "no-store" }).catch(() => new Response("offline", { status: 503 })));
 });

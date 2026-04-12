@@ -25,7 +25,7 @@ app.use("*", async (c, next) => {
     path === "/login" || path === "/api/login" ||
     path === "/login.html" || path === "/login.css" || path === "/login.js" ||
     path === "/api/health" || path === "/manifest.json" || path === "/icon.svg" ||
-    path === "/sw.js"
+    path === "/sw.js" || path === "/reset"
   ) return next();
 
   // Hermes posts cards without a cookie — allow via shared secret header
@@ -208,6 +208,33 @@ app.post("/api/transcribe", async (c) => {
 });
 
 app.get("/api/health", (c) => c.json({ ok: !!process.env.GROQ_API_KEY ? true : "ok-no-groq" }));
+
+// Nuke-cache escape hatch — visit https://tasks.gooddogzkc.com/reset from any browser
+app.get("/reset", (c) => {
+  c.header("Cache-Control", "no-store");
+  return c.html(`<!DOCTYPE html><html><body style="background:#0f0f14;color:#f4f4f8;font-family:system-ui;padding:40px;text-align:center">
+<h2>Resetting…</h2>
+<p id="status">Working</p>
+<script>
+(async () => {
+  const s = document.getElementById("status");
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) await r.unregister();
+      s.textContent = "Unregistered " + regs.length + " service worker(s). ";
+    }
+    if (window.caches) {
+      const names = await caches.keys();
+      await Promise.all(names.map((n) => caches.delete(n)));
+      s.textContent += "Cleared " + names.length + " cache(s). ";
+    }
+    s.textContent += "Done! Reloading in 2s…";
+    setTimeout(() => location.href = "/", 2000);
+  } catch (e) { s.textContent = "Error: " + e.message; }
+})();
+</script></body></html>`);
+});
 
 // Prevent stale caches for HTML/JS/CSS so refresh pulls new versions
 app.use("/*", async (c, next) => {
