@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tasks">
+<link rel="manifest" href="/manifest.json">
+<title>Tinder for Tasks</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div class="badge" id="pending-count">0</div>
+    <div class="title">Tasks</div>
+    <button class="icon-btn" id="refresh-btn" aria-label="Refresh">↻</button>
+  </header>
+
+  <main id="stack"></main>
+
+  <div id="empty-state" hidden>
+    <div class="empty-inner">
+      <div class="check">✓</div>
+      <h2>All Caught Up</h2>
+      <section class="dash-block">
+        <div class="dash-label">TODAY</div>
+        <div class="dash-row" id="auto-send-summary">0 auto-sent · 0 skipped</div>
+        <button class="link-btn" id="view-autos">View auto-sends →</button>
+      </section>
+      <section class="dash-block">
+        <div class="dash-label">NEXT UP</div>
+        <div id="next-up" class="dash-row muted">No appointments loaded</div>
+      </section>
+      <section class="dash-block">
+        <div class="dash-label">PIPELINE</div>
+        <div id="pipeline" class="dash-row muted">—</div>
+      </section>
+    </div>
+  </div>
+
+  <div id="snooze-sheet" class="sheet" hidden>
+    <div class="sheet-inner">
+      <h3>Snooze for…</h3>
+      <button data-snooze="1h">1 hour</button>
+      <button data-snooze="3h">3 hours</button>
+      <button data-snooze="tomorrow">Tomorrow 8am</button>
+      <button class="cancel" data-snooze="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="edit-sheet" class="sheet" hidden>
+    <div class="sheet-inner edit-inner">
+      <h3>Edit draft</h3>
+      <textarea id="edit-text" rows="6"></textarea>
+      <div class="tag-label">What was off?</div>
+      <div class="tags" id="edit-tags">
+        <button data-tag="tone">Tone</button>
+        <button data-tag="word">Word choice</button>
+        <button data-tag="wrong">Wrong info</button>
+        <button data-tag="long">Too long</button>
+        <button data-tag="stiff">Too stiff</button>
+        <button data-tag="context">Missing context</button>
+      </div>
+      <div class="sheet-actions">
+        <button class="cancel" id="edit-cancel">Cancel</button>
+        <button class="primary" id="edit-send">Send edited</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="autos-sheet" class="sheet" hidden>
+    <div class="sheet-inner">
+      <h3>Auto-sent today</h3>
+      <div id="autos-list"></div>
+      <button class="cancel" id="autos-close">Close</button>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+</div>
+<script src="/app.js" type="module"></script>
+</body>
+</html>

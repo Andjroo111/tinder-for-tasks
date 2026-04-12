@@ -1,0 +1,4 @@
+data/
+config.yaml
+node_modules/
+.env
