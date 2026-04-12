@@ -79,6 +79,7 @@ export async function upsertCard(payload: CardCreatePayload): Promise<Card> {
     return existing;
   }
 
+  const snoozedInFuture = payload.snoozedUntil && payload.snoozedUntil > now;
   const card: Card = {
     cardId: randomUUID(),
     contactId: payload.contactId,
@@ -93,7 +94,8 @@ export async function upsertCard(payload: CardCreatePayload): Promise<Card> {
     tier: payload.tier,
     calendarContext: payload.calendarContext,
     suggestedSlots: payload.suggestedSlots,
-    status: "pending",
+    status: snoozedInFuture ? "snoozed" : "pending",
+    snoozedUntil: snoozedInFuture ? payload.snoozedUntil : undefined,
     createdAt: now,
     updatedAt: now,
   };

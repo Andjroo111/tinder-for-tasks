@@ -69,6 +69,7 @@ export interface CardCreatePayload {
   tier: Tier;
   calendarContext?: CalendarContext;
   suggestedSlots?: string[];
+  snoozedUntil?: string;
 }
 
 export interface AutoSendEntry {
