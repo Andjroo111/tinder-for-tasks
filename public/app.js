@@ -670,7 +670,12 @@ $("#mode-toggle").addEventListener("click", async () => {
   loadMode();
 });
 
-$("#refresh-btn").addEventListener("click", load);
+$("#refresh-btn").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  btn.classList.add("spinning");
+  try { await load(); await loadDashboard(); }
+  finally { setTimeout(() => btn.classList.remove("spinning"), 400); }
+});
 $("#next-btn").addEventListener("click", () => {
   if (cards.length < 2) return;
   // Rotate: move top card to the back locally so you can peek ahead without acting

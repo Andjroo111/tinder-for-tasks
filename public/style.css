@@ -543,6 +543,7 @@ body::before {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+#refresh-btn.spinning { animation: spin 0.5s linear; }
 .tag-label {
   font-family: var(--font-heading);
   font-size: 10px; color: var(--teal);
