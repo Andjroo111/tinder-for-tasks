@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "CeraRound";
+  src: url("/fonts/Cera-Round-Black-Web.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* GDKC brand palette */
   --bg: #0A091A;
@@ -27,7 +35,7 @@
   /* Signature mesh gradient */
   --mesh: linear-gradient(135deg, #A0C7FF 0%, #467ED6 30%, #C77DFF 65%, #9945FF 100%);
 
-  --font-heading: "Space Grotesk", -apple-system, system-ui, sans-serif;
+  --font-heading: "CeraRound", "Space Grotesk", -apple-system, system-ui, sans-serif;
   --font-body: "Inter", -apple-system, system-ui, sans-serif;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -68,16 +76,18 @@ body::before {
   backdrop-filter: blur(10px);
 }
 .mode-toggle {
-  background: var(--warn); color: #1a1a00;
-  border: none; border-radius: 999px;
+  background: transparent; color: var(--lavender);
+  border: 1.5px solid var(--lavender);
+  border-radius: 999px;
   padding: 6px 16px; font-size: 11px;
-  font-weight: 700; letter-spacing: 1.5px;
+  font-weight: 900; letter-spacing: 2px;
   font-family: var(--font-heading);
-  box-shadow: 0 0 0 2px rgba(255,184,77,0.25), 0 0 20px rgba(255,184,77,0.2);
+  box-shadow: 0 0 14px rgba(160,140,255,0.2);
 }
 .mode-toggle.live {
   background: var(--teal); color: #001814;
-  box-shadow: 0 0 0 2px rgba(7,237,190,0.3), 0 0 20px rgba(7,237,190,0.3);
+  border-color: var(--teal);
+  box-shadow: 0 0 20px rgba(7,237,190,0.45), inset 0 0 0 1px rgba(0,0,0,0.1);
 }
 .title {
   font-family: var(--font-heading);
@@ -187,8 +197,8 @@ body::before {
 }
 .card-name {
   font-family: var(--font-heading);
-  font-size: 19px; font-weight: 700;
-  letter-spacing: -0.2px;
+  font-size: 20px; font-weight: 900;
+  letter-spacing: -0.3px;
 }
 .card-age {
   font-size: 11px; color: var(--muted);
@@ -215,26 +225,40 @@ body::before {
 .cal-day { margin-bottom: 10px; }
 .cal-day-head {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 13px; font-weight: 600; margin-bottom: 6px;
-  font-family: var(--font-heading);
+  font-size: 14px; margin-bottom: 8px;
 }
-.cal-day-head b { color: var(--lavender); }
+.cal-day-head b {
+  font-family: var(--font-heading); font-weight: 900;
+  color: var(--lavender);
+  font-size: 15px; letter-spacing: 0.2px;
+}
 .cal-day-note {
-  font-size: 10px; color: var(--warn);
-  letter-spacing: 1px; text-transform: uppercase;
+  font-family: var(--font-heading); font-weight: 900;
+  font-size: 10px; color: var(--pink);
+  letter-spacing: 1.5px; text-transform: uppercase;
 }
 .cal-block {
-  display: flex; justify-content: space-between;
-  padding: 6px 0; font-size: 13px;
-  border-top: 1px solid rgba(44,41,119,0.3);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; font-size: 13px;
+  border-top: 1px solid rgba(44,41,119,0.4);
 }
 .cal-block .time {
   font-variant-numeric: tabular-nums;
-  color: var(--muted-2); font-weight: 500;
+  font-weight: 500;
 }
-.cal-block.open .status { color: var(--teal); font-weight: 700; letter-spacing: 0.5px; }
-.cal-block.blocked .status { color: var(--pink); opacity: 0.7; }
-.cal-block .status { font-size: 11px; letter-spacing: 0.5px; }
+.cal-block .status {
+  font-family: var(--font-heading);
+  font-size: 10px; letter-spacing: 1.5px; font-weight: 900;
+}
+.cal-block.open .time { color: var(--text); }
+.cal-block.open .status { color: var(--teal); }
+.cal-block.blocked .time { color: rgba(248,248,248,0.35); }
+.cal-block.blocked .status {
+  color: rgba(248,248,248,0.4);
+  font-size: 10px; font-weight: 500;
+  font-family: var(--font-body); letter-spacing: 0;
+  text-transform: none;
+}
 
 .suggest {
   font-size: 12px; color: var(--muted); margin-top: 8px;

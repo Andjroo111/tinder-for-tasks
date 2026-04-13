@@ -6,8 +6,13 @@
 <meta name="theme-color" content="#0f0f14">
 <title>Sign in · Tasks</title>
 <link rel="manifest" href="/manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+@font-face {
+  font-family: "CeraRound";
+  src: url("/fonts/Cera-Round-Black-Web.woff2") format("woff2");
+  font-weight: 900; font-style: normal; font-display: swap;
+}
 body {
   margin: 0; background: #0A091A; color: #F8F8F8;
   font-family: "Inter", system-ui, sans-serif;
@@ -35,8 +40,8 @@ body::before {
   font-size: 34px; font-weight: 700; color: #07EDBE;
 }
 h1 {
-  font-family: "Space Grotesk", sans-serif;
-  font-size: 26px; font-weight: 700; margin: 0 0 8px;
+  font-family: "CeraRound", "Space Grotesk", sans-serif;
+  font-size: 30px; font-weight: 900; margin: 0 0 8px;
   background: linear-gradient(90deg, #07EDBE, #C77DFF, #FF7EC0);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
