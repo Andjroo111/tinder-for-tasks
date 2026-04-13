@@ -72,6 +72,14 @@ export async function upsertCard(payload: CardCreatePayload): Promise<Card> {
     existing.calendarContext = payload.calendarContext ?? existing.calendarContext;
     existing.suggestedSlots = payload.suggestedSlots ?? existing.suggestedSlots;
     existing.clientMessage = payload.clientMessage ?? existing.clientMessage;
+    // Scheduling-override fields (only meaningful for scheduling_override cards)
+    existing.overrideRequestId = payload.overrideRequestId ?? existing.overrideRequestId;
+    existing.requestedSlot = payload.requestedSlot ?? existing.requestedSlot;
+    existing.tierConflict = payload.tierConflict ?? existing.tierConflict;
+    existing.driveTimeFromPrevMin = payload.driveTimeFromPrevMin ?? existing.driveTimeFromPrevMin;
+    existing.alternativeSlots = payload.alternativeSlots ?? existing.alternativeSlots;
+    existing.approveUrl = payload.approveUrl ?? existing.approveUrl;
+    existing.rejectUrl = payload.rejectUrl ?? existing.rejectUrl;
     existing.status = "pending";
     existing.snoozedUntil = undefined;
     existing.updatedAt = now;
@@ -98,6 +106,13 @@ export async function upsertCard(payload: CardCreatePayload): Promise<Card> {
     snoozedUntil: snoozedInFuture ? payload.snoozedUntil : undefined,
     createdAt: now,
     updatedAt: now,
+    overrideRequestId: payload.overrideRequestId,
+    requestedSlot: payload.requestedSlot,
+    tierConflict: payload.tierConflict,
+    driveTimeFromPrevMin: payload.driveTimeFromPrevMin,
+    alternativeSlots: payload.alternativeSlots,
+    approveUrl: payload.approveUrl,
+    rejectUrl: payload.rejectUrl,
   };
   store.cards.push(card);
   await writeStore(store);

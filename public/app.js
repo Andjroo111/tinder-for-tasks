@@ -62,8 +62,10 @@ function render() {
 
 function buildCard(card) {
   const el = document.createElement("div");
-  el.className = `card tier-${card.tier}`;
+  const isOverride = card.triggerEvent === "scheduling_override";
+  el.className = `card tier-${card.tier}${isOverride ? " override-card" : ""}`;
   el.dataset.cardId = card.cardId;
+  if (isOverride) el.dataset.kind = "override";
 
   const pos = cards.length > 1 ? `<span class="pos-indicator">1 of ${cards.length}</span>` : "";
   const head = `
@@ -74,46 +76,115 @@ function buildCard(card) {
   `;
 
   let body = head;
-  if (card.clientMessage) {
-    body += `<div class="card-msg">"${escape(card.clientMessage)}"</div>`;
-  }
 
-  const hist = card.conversationHistory || [];
-  if (hist.length >= 2) {
+  if (isOverride) {
+    body += renderOverrideBody(card);
+  } else {
+    if (card.clientMessage) {
+      body += `<div class="card-msg">"${escape(card.clientMessage)}"</div>`;
+    }
+
+    const hist = card.conversationHistory || [];
+    if (hist.length >= 2) {
+      body += `<div class="section">
+        <div class="section-label">Thread</div>
+        <div class="thread">${hist
+          .slice(-5)
+          .map((m) => `<div class="thread-entry"><span class="from">${escape(m.from)}:</span> ${escape(m.text)}</div>`)
+          .join("")}</div>
+      </div>`;
+    }
+
+    if (card.calendarContext && card.calendarContext.slots?.length) {
+      body += `<div class="section">
+        <div class="section-label">Availability</div>
+        ${card.calendarContext.slots.map(renderCalDay).join("")}
+        ${card.suggestedSlots?.length
+          ? `<div class="suggest">Hermes suggests: <b>${card.suggestedSlots.map(fmtSlot).join(", ")}</b></div>`
+          : ""}
+      </div>`;
+    }
+
     body += `<div class="section">
-      <div class="section-label">Thread</div>
-      <div class="thread">${hist
-        .slice(-5)
-        .map((m) => `<div class="thread-entry"><span class="from">${escape(m.from)}:</span> ${escape(m.text)}</div>`)
-        .join("")}</div>
+      <div class="section-label">Draft</div>
+      <div class="draft">${escape(card.draftResponse)}</div>
     </div>`;
   }
 
-  if (card.calendarContext && card.calendarContext.slots?.length) {
-    body += `<div class="section">
-      <div class="section-label">Availability</div>
-      ${card.calendarContext.slots.map(renderCalDay).join("")}
-      ${card.suggestedSlots?.length
-        ? `<div class="suggest">Hermes suggests: <b>${card.suggestedSlots.map(fmtSlot).join(", ")}</b></div>`
-        : ""}
-    </div>`;
-  }
-
-  body += `<div class="section">
-    <div class="section-label">Draft</div>
-    <div class="draft">${escape(card.draftResponse)}</div>
-  </div>`;
-
-  const actions = `
-    <div class="actions">
-      <button class="act skip" data-action="skip">← Skip</button>
-      <button class="act snooze" data-action="snooze">↓ Snooze</button>
-      <button class="act send" data-action="approve">Send →</button>
-    </div>
-  `;
+  const actions = isOverride
+    ? `
+      <div class="actions override-actions">
+        <button class="act skip" data-action="schedule-reject">← Offer alts</button>
+        <button class="act send" data-action="schedule-approve">Confirm booking →</button>
+      </div>
+    `
+    : `
+      <div class="actions">
+        <button class="act skip" data-action="skip">← Skip</button>
+        <button class="act snooze" data-action="snooze">↓ Snooze</button>
+        <button class="act send" data-action="approve">Send →</button>
+      </div>
+    `;
 
   el.innerHTML = `<div class="card-body">${body}</div><div class="card-footer">${actions}</div>`;
   return el;
+}
+
+function fmtSlotPretty(iso) {
+  const d = new Date(iso);
+  const weekday = d.toLocaleDateString(undefined, { weekday: "short" });
+  const day = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const time = d
+    .toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+    .replace(":00 ", " ");
+  return `${weekday} ${day} · ${time}`;
+}
+
+function renderOverrideBody(card) {
+  const slot = card.requestedSlot || {};
+  const conflict = card.tierConflict || null;
+  const slotLine = slot.start ? fmtSlotPretty(slot.start) : "(slot missing)";
+  const reqSlot = `
+    <div class="override-slot">
+      <div class="override-slot-label">Client requested</div>
+      <div class="override-slot-time">${escape(slotLine)}</div>
+    </div>
+  `;
+
+  const conflictChip = conflict
+    ? `<div class="override-chips">
+        <span class="chip chip-${escape(conflict.tier || "soft")}">
+          ${escape((conflict.tier || "soft").toUpperCase())} · ${escape(conflict.eventTitle || "soft block")}
+        </span>
+        ${typeof card.driveTimeFromPrevMin === "number"
+          ? `<span class="chip chip-drive">🚗 ${Math.round(card.driveTimeFromPrevMin)}m drive</span>`
+          : ""}
+      </div>`
+    : "";
+
+  const alts = Array.isArray(card.alternativeSlots) ? card.alternativeSlots : [];
+  const altsBlock = alts.length
+    ? `<div class="section">
+        <div class="section-label">Alternative slots (auto-offered on reject)</div>
+        <div class="alt-pills">
+          ${alts.map((iso) => `<span class="alt-pill">${escape(fmtSlotPretty(iso))}</span>`).join("")}
+        </div>
+      </div>`
+    : `<div class="section">
+        <div class="section-label">Alternatives</div>
+        <div class="alt-pills empty">No alternatives queued — client will get a manual reply.</div>
+      </div>`;
+
+  const draft = `<div class="section">
+    <div class="section-label">If approved, client gets:</div>
+    <div class="draft">${escape(card.draftResponse)}</div>
+  </div>`;
+
+  const addr = card.clientAddress
+    ? `<div class="override-meta">📍 ${escape(card.clientAddress)}</div>`
+    : "";
+
+  return reqSlot + conflictChip + addr + altsBlock + draft;
 }
 
 function renderCalDay(day) {
@@ -171,6 +242,8 @@ function attachGestures(el, card) {
       if (action === "approve") approve(card);
       else if (action === "skip") skip(card);
       else if (action === "snooze") openSnooze(card);
+      else if (action === "schedule-approve") scheduleApprove(card);
+      else if (action === "schedule-reject") scheduleReject(card);
     });
   });
 
@@ -235,18 +308,19 @@ function attachGestures(el, card) {
     if (held) { el.style.transform = ""; return; }
 
     const threshold = 100;
+    const isOverride = card.triggerEvent === "scheduling_override";
     if (dx > threshold) {
       el.classList.add("out-right");
-      setTimeout(() => approve(card), 250);
+      setTimeout(() => (isOverride ? scheduleApprove(card) : approve(card)), 250);
     } else if (dx < -threshold) {
       el.classList.add("out-left");
-      setTimeout(() => skip(card), 250);
+      setTimeout(() => (isOverride ? scheduleReject(card) : skip(card)), 250);
     } else if (dy > threshold) {
       el.classList.add("out-down");
-      setTimeout(() => openSnooze(card), 250);
+      setTimeout(() => (isOverride ? scheduleReject(card) : openSnooze(card)), 250);
     } else if (dy < -threshold) {
       el.classList.add("out-up");
-      setTimeout(() => thumbsUp(card), 250);
+      setTimeout(() => (isOverride ? scheduleApprove(card) : thumbsUp(card)), 250);
     } else {
       el.style.transform = "";
       el.style.boxShadow = "";
@@ -284,6 +358,20 @@ async function thumbsUp(card) {
   const res = await api(`/api/cards/${card.cardId}/thumbs-up`, { method: "POST" });
   if (res.sent) setTimeout(load, 300);
   else { alert(res.error || "Failed to send 👍"); load(); }
+}
+
+async function scheduleApprove(card) {
+  stamp(card, "green");
+  const res = await api(`/api/cards/${card.cardId}/schedule-approve`, { method: "POST" });
+  if (res.approved) setTimeout(load, 300);
+  else { alert(res.error || "Failed to approve override"); load(); }
+}
+
+async function scheduleReject(card) {
+  stamp(card, "red");
+  const res = await api(`/api/cards/${card.cardId}/schedule-reject`, { method: "POST" });
+  if (res.rejected) setTimeout(load, 300);
+  else { alert(res.error || "Failed to reject override"); load(); }
 }
 
 function previewSnoozeTime(hour) {
