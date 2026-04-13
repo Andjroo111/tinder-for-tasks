@@ -28,7 +28,8 @@ app.use("*", async (c, next) => {
     path === "/login" || path === "/api/login" ||
     path === "/login.html" || path === "/login.css" || path === "/login.js" ||
     path === "/api/health" || path === "/manifest.json" || path === "/icon.svg" ||
-    path === "/sw.js" || path === "/reset"
+    path === "/sw.js" || path === "/reset" ||
+    path.startsWith("/fonts/")
   ) return next();
 
   // Hermes posts cards without a cookie — allow via shared secret header
