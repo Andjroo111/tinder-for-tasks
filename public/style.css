@@ -193,8 +193,13 @@ html, body {
 }
 .empty-inner h2 {
   text-align: center; font-size: 22px; font-weight: 600;
-  margin: 0 0 28px;
+  margin: 0 0 8px;
 }
+.dash-sub {
+  text-align: center; color: var(--muted);
+  font-size: 14px; margin: 0 0 20px;
+}
+.link-btn[hidden] { display: none !important; }
 .dash-block {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;

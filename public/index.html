@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Tasks">
 <link rel="manifest" href="/manifest.json">
 <title>Tinder for Tasks</title>
-<link rel="stylesheet" href="/style.css?v=7">
+<link rel="stylesheet" href="/style.css?v=10">
 </head>
 <body>
 <div id="app">
@@ -25,19 +25,8 @@
     <div class="empty-inner">
       <div class="check">✓</div>
       <h2>All Caught Up</h2>
-      <section class="dash-block">
-        <div class="dash-label">TODAY</div>
-        <div class="dash-row" id="auto-send-summary">0 auto-sent · 0 skipped</div>
-        <button class="link-btn" id="view-autos">View auto-sends →</button>
-      </section>
-      <section class="dash-block">
-        <div class="dash-label">NEXT UP</div>
-        <div id="next-up" class="dash-row muted">No appointments loaded</div>
-      </section>
-      <section class="dash-block">
-        <div class="dash-label">PIPELINE</div>
-        <div id="pipeline" class="dash-row muted">—</div>
-      </section>
+      <p class="dash-sub" id="today-summary">Nothing to review right now</p>
+      <button class="link-btn" id="view-autos" hidden>View activity log →</button>
     </div>
   </div>
 
@@ -90,14 +79,14 @@
 
   <div id="autos-sheet" class="sheet" hidden>
     <div class="sheet-inner">
-      <h3>Auto-sent today</h3>
+      <h3>Activity log</h3>
       <div id="autos-list"></div>
       <button class="cancel" id="autos-close">Close</button>
     </div>
   </div>
 
 </div>
-<script src="/app.js?v=7" type="module"></script>
+<script src="/app.js?v=10" type="module"></script>
 <script>
 // Nuke any old caches on every load + forcibly update the service worker
 (async () => {

@@ -377,9 +377,16 @@ function openEdit(card) {
 
 async function loadDashboard() {
   const data = await api("/api/dashboard");
-  $("#auto-send-summary").textContent = `${data.autoSendsToday} auto-sent today`;
-  const pipe = $("#pipeline");
-  pipe.textContent = `${data.pipeline.newLeads} new leads · ${data.pipeline.awaitingReply} awaiting reply`;
+  const todaySummary = $("#today-summary");
+  const viewBtn = $("#view-autos");
+  const total = data.autoSendsToday || 0;
+  if (total > 0) {
+    todaySummary.textContent = `${total} handled automatically today`;
+    viewBtn.hidden = false;
+  } else {
+    todaySummary.textContent = "Nothing to review right now";
+    viewBtn.hidden = true;
+  }
 }
 
 async function openAutos() {
