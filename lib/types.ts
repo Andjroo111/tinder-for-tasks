@@ -6,10 +6,23 @@ export type TriggerEvent =
   | "inbound_sms"
   | "new_lead"
   | "scheduling"
+  | "scheduling_override"
   | "follow_up"
   | "payment"
   | "briefing"
   | "escalation";
+
+// Shape of the tier conflict carried by a scheduling_override card. Mirrors
+// calendar-pwa/lib/types.ts TierConflictInfo but intentionally loose so this
+// repo doesn't take a dep on the other one.
+export interface SchedulingTierConflict {
+  tier: "hard" | "soft" | "flex";
+  calendarId?: string;
+  eventId?: string;
+  eventTitle: string;
+  overlapStart: string;
+  overlapEnd: string;
+}
 
 export interface ConversationMessage {
   from: "client" | "andrew" | "system";
@@ -54,9 +67,18 @@ export interface Card {
   createdAt: string;
   updatedAt: string;
   snoozedUntil?: string;
+  // Scheduling-override extras (only set when triggerEvent === "scheduling_override")
+  overrideRequestId?: string;
+  requestedSlot?: { start: string; end: string };
+  tierConflict?: SchedulingTierConflict;
+  driveTimeFromPrevMin?: number;
+  alternativeSlots?: string[];
+  approveUrl?: string;
+  rejectUrl?: string;
 }
 
 export interface CardCreatePayload {
+  cardType?: "scheduling_override" | string;
   contactId: string;
   contactName: string;
   dogName?: string;
@@ -70,6 +92,14 @@ export interface CardCreatePayload {
   calendarContext?: CalendarContext;
   suggestedSlots?: string[];
   snoozedUntil?: string;
+  // Scheduling-override extras
+  overrideRequestId?: string;
+  requestedSlot?: { start: string; end: string };
+  tierConflict?: SchedulingTierConflict;
+  driveTimeFromPrevMin?: number;
+  alternativeSlots?: string[];
+  approveUrl?: string;
+  rejectUrl?: string;
 }
 
 export interface AutoSendEntry {

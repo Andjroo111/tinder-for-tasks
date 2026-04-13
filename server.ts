@@ -63,7 +63,14 @@ app.post("/api/cards", async (c) => {
     return c.json({ error: "missing required fields" }, 400);
   }
 
-  if (payload.tier === 1 || payload.tier === 2) {
+  // Scheduling-override cards ALWAYS need Andrew's judgment — never auto-send,
+  // even if the poster accidentally set tier=1/2. The SMS only fires after
+  // Andrew swipes right and the proxy forwards to calendar-pwa.
+  const isSchedulingOverride =
+    payload.triggerEvent === "scheduling_override" ||
+    payload.cardType === "scheduling_override";
+
+  if (!isSchedulingOverride && (payload.tier === 1 || payload.tier === 2)) {
     try {
       await sendSMS(payload.phone, payload.draftResponse, payload.contactId);
       await logAutoSend({
@@ -81,8 +88,94 @@ app.post("/api/cards", async (c) => {
     }
   }
 
+  // Always queue scheduling_override cards as triggerEvent="scheduling_override"
+  // even if the poster sent the legacy "scheduling". Normalize here.
+  if (isSchedulingOverride) {
+    payload.triggerEvent = "scheduling_override";
+    // Force tier 3 minimum for override cards
+    if (payload.tier < 3) payload.tier = 3;
+  }
+
   const card = await upsertCard(payload);
   return c.json({ card });
+});
+
+// Scheduling-override approve: forward to calendar-pwa with the Hermes secret.
+// Used by the web UI when Andrew swipes right on a scheduling_override card.
+app.post("/api/cards/:id/schedule-approve", async (c) => {
+  const card = await getCard(c.req.param("id"));
+  if (!card) return c.json({ error: "not found" }, 404);
+  if (card.triggerEvent !== "scheduling_override" || !card.approveUrl) {
+    return c.json({ error: "card is not a scheduling_override" }, 400);
+  }
+  const secret = process.env.HERMES_SECRET;
+  if (!secret) {
+    return c.json({ error: "server missing HERMES_SECRET" }, 500);
+  }
+  try {
+    const res = await fetch(card.approveUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hermes-Secret": secret,
+      },
+      body: JSON.stringify({ via: "tinder-for-tasks" }),
+    });
+    const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      return c.json({ error: "calendar-pwa rejected approval", status: res.status, ...body }, 502);
+    }
+    await updateStatus(card.cardId, "sent");
+    await logActivity({
+      action: "sent",
+      contactName: card.contactName,
+      contactId: card.contactId,
+      preview: `scheduling override approved: ${card.draftResponse.slice(0, 80)}`,
+      at: new Date().toISOString(),
+    });
+    return c.json({ approved: true, ...body });
+  } catch (err) {
+    return c.json({ error: String(err) }, 502);
+  }
+});
+
+// Scheduling-override reject: forward to calendar-pwa with the Hermes secret.
+// Calendar-pwa will SMS the client the 3 alternative slots.
+app.post("/api/cards/:id/schedule-reject", async (c) => {
+  const card = await getCard(c.req.param("id"));
+  if (!card) return c.json({ error: "not found" }, 404);
+  if (card.triggerEvent !== "scheduling_override" || !card.rejectUrl) {
+    return c.json({ error: "card is not a scheduling_override" }, 400);
+  }
+  const secret = process.env.HERMES_SECRET;
+  if (!secret) {
+    return c.json({ error: "server missing HERMES_SECRET" }, 500);
+  }
+  try {
+    const res = await fetch(card.rejectUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hermes-Secret": secret,
+      },
+      body: JSON.stringify({ via: "tinder-for-tasks" }),
+    });
+    const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      return c.json({ error: "calendar-pwa rejected", status: res.status, ...body }, 502);
+    }
+    await updateStatus(card.cardId, "skipped");
+    await logActivity({
+      action: "skipped",
+      contactName: card.contactName,
+      contactId: card.contactId,
+      preview: "scheduling override rejected — offered alt slots",
+      at: new Date().toISOString(),
+    });
+    return c.json({ rejected: true, ...body });
+  } catch (err) {
+    return c.json({ error: String(err) }, 502);
+  }
 });
 
 app.get("/api/cards", async (c) => {
