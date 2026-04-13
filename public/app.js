@@ -375,32 +375,37 @@ function openEdit(card) {
   };
 }
 
-async function loadDashboard() {
-  const data = await api("/api/dashboard");
-  const todaySummary = $("#today-summary");
-  const viewBtn = $("#view-autos");
-  const total = data.autoSendsToday || 0;
-  if (total > 0) {
-    todaySummary.textContent = `${total} handled automatically today`;
-    viewBtn.hidden = false;
-  } else {
-    todaySummary.textContent = "Nothing to review right now";
-    viewBtn.hidden = true;
-  }
-}
+const ACT_ICON = { sent: "✓", edited: "✎", thumbs_up: "👍", skipped: "↩", snoozed: "⏰" };
+const ACT_VERB = { sent: "Sent to", edited: "Sent edited to", thumbs_up: "👍 to", skipped: "Skipped", snoozed: "Snoozed" };
 
-async function openAutos() {
-  const sheet = $("#autos-sheet");
-  const list = $("#autos-list");
-  const data = await api("/api/auto-sends");
-  list.innerHTML = (data.entries || []).map((e) => `
-    <div class="auto-entry">
-      <div class="who">${escape(e.contactName)} <small>(T${e.tier})</small></div>
-      <div class="msg">${escape(e.message)}</div>
-      <div class="time">${formatAge(e.sentAt)} ago</div>
-    </div>
-  `).join("") || '<div class="dash-row muted">No auto-sends yet.</div>';
-  sheet.hidden = false;
+async function loadDashboard() {
+  const data = await api("/api/activity");
+  const entries = (data.entries || []);
+  const todayStr = new Date().toDateString();
+  const todayEntries = entries.filter((e) => new Date(e.at).toDateString() === todayStr);
+  const list = $("#activity-list");
+  const summary = $("#today-summary");
+
+  if (todayEntries.length === 0) {
+    summary.textContent = "Nothing handled yet today";
+    list.innerHTML = "";
+    return;
+  }
+  summary.textContent = `${todayEntries.length} handled today`;
+  const recent = entries.slice(0, 8);
+  list.innerHTML = `<div class="act-section-label">Recent activity</div>` +
+    recent.map((e) => `
+      <div class="act-item">
+        <div class="act-icon ${e.action}">${ACT_ICON[e.action] || "·"}</div>
+        <div class="act-body">
+          <div class="act-head">
+            <span class="act-name">${ACT_VERB[e.action] || e.action} ${escape(e.contactName)}</span>
+            <span class="act-time">${formatAge(e.at)}</span>
+          </div>
+          ${e.preview ? `<div class="act-preview">${escape(e.preview)}</div>` : ""}
+        </div>
+      </div>
+    `).join("");
 }
 
 let mediaRecorder = null;
@@ -550,8 +555,6 @@ $("#mode-toggle").addEventListener("click", async () => {
   loadMode();
 });
 
-$("#view-autos").addEventListener("click", openAutos);
-$("#autos-close").addEventListener("click", () => { $("#autos-sheet").hidden = true; });
 $("#refresh-btn").addEventListener("click", load);
 
 const STAMPS = {

@@ -136,6 +136,41 @@ export async function logAutoSend(entry: AutoSendEntry): Promise<void> {
   await Bun.write(AUTOSENDS_PATH, JSON.stringify(entries, null, 2));
 }
 
+const ACTIVITY_PATH = `${import.meta.dir}/../data/activity.json`;
+
+export type ActivityAction = "sent" | "thumbs_up" | "edited" | "skipped" | "snoozed";
+export interface ActivityEntry {
+  action: ActivityAction;
+  contactName: string;
+  contactId: string;
+  preview?: string;
+  at: string;
+}
+
+export async function logActivity(entry: ActivityEntry): Promise<void> {
+  const file = Bun.file(ACTIVITY_PATH);
+  let entries: ActivityEntry[] = [];
+  if (await file.exists()) {
+    try {
+      entries = await file.json();
+    } catch {}
+  }
+  entries.unshift(entry);
+  entries = entries.slice(0, 200);
+  await Bun.write(ACTIVITY_PATH, JSON.stringify(entries, null, 2));
+}
+
+export async function listActivity(limit = 20): Promise<ActivityEntry[]> {
+  const file = Bun.file(ACTIVITY_PATH);
+  if (!(await file.exists())) return [];
+  try {
+    const entries: ActivityEntry[] = await file.json();
+    return entries.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
 export async function listAutoSends(limit = 50): Promise<AutoSendEntry[]> {
   const file = Bun.file(AUTOSENDS_PATH);
   if (!(await file.exists())) return [];

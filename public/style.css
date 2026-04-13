@@ -430,6 +430,43 @@ html, body {
 .auto-entry .msg { color: var(--muted); }
 .auto-entry .time { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
+#activity-list { margin-top: 8px; }
+.act-section-label {
+  font-size: 11px; letter-spacing: 1.5px; color: var(--muted);
+  text-transform: uppercase; font-weight: 600;
+  margin: 12px 0 8px; padding-left: 4px;
+}
+.act-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.act-icon {
+  flex-shrink: 0; width: 28px; height: 28px;
+  border-radius: 14px; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.act-icon.sent { background: rgba(34,197,94,0.2); }
+.act-icon.edited { background: rgba(34,197,94,0.2); }
+.act-icon.thumbs_up { background: rgba(99,179,237,0.2); }
+.act-icon.skipped { background: rgba(239,68,68,0.2); }
+.act-icon.snoozed { background: rgba(249,115,22,0.2); }
+.act-body { flex: 1; min-width: 0; }
+.act-head {
+  display: flex; justify-content: space-between;
+  align-items: baseline; gap: 8px;
+}
+.act-name { font-weight: 600; font-size: 14px; }
+.act-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.act-preview {
+  color: var(--muted); font-size: 13px;
+  margin-top: 2px; line-height: 1.35;
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
 /* Card stamp — replaces toast. Appears on the swiped-away card. */
 .stamp {
   position: absolute;

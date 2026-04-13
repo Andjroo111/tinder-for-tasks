@@ -9,6 +9,8 @@ import {
   snoozeCard,
   logAutoSend,
   listAutoSends,
+  logActivity,
+  listActivity,
 } from "./lib/cards";
 import { sendSMS } from "./lib/sms";
 import { logEditFeedback } from "./lib/feedback";
@@ -94,6 +96,7 @@ app.post("/api/cards/:id/approve", async (c) => {
   try {
     await sendSMS(card.phone, card.draftResponse, card.contactId);
     await updateStatus(card.cardId, "sent");
+    await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, preview: card.draftResponse.slice(0, 100), at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
@@ -103,6 +106,7 @@ app.post("/api/cards/:id/approve", async (c) => {
 app.post("/api/cards/:id/skip", async (c) => {
   const card = await updateStatus(c.req.param("id"), "skipped");
   if (!card) return c.json({ error: "not found" }, 404);
+  await logActivity({ action: "skipped", contactName: card.contactName, contactId: card.contactId, at: new Date().toISOString() });
   return c.json({ skipped: true });
 });
 
@@ -112,6 +116,7 @@ app.post("/api/cards/:id/thumbs-up", async (c) => {
   try {
     await sendSMS(card.phone, "👍", card.contactId);
     await updateStatus(card.cardId, "sent", { draftResponse: "👍" });
+    await logActivity({ action: "thumbs_up", contactName: card.contactName, contactId: card.contactId, preview: "👍", at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
@@ -141,6 +146,7 @@ app.post("/api/cards/:id/edit", async (c) => {
       timestamp: new Date().toISOString(),
     });
     await updateStatus(card.cardId, "sent", { draftResponse: body.editedDraft });
+    await logActivity({ action: "edited", contactName: card.contactName, contactId: card.contactId, preview: body.editedDraft.slice(0, 100), at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
@@ -186,11 +192,17 @@ app.post("/api/cards/:id/snooze", async (c) => {
   }
   const card = await snoozeCard(c.req.param("id"), until.toISOString());
   if (!card) return c.json({ error: "not found" }, 404);
+  await logActivity({ action: "snoozed", contactName: card.contactName, contactId: card.contactId, preview: `until ${until.toLocaleString()}`, at: new Date().toISOString() });
   return c.json({ snoozedUntil: until.toISOString() });
 });
 
 app.get("/api/auto-sends", async (c) => {
   const entries = await listAutoSends(50);
+  return c.json({ entries });
+});
+
+app.get("/api/activity", async (c) => {
+  const entries = await listActivity(20);
   return c.json({ entries });
 });
 
