@@ -106,6 +106,18 @@ app.post("/api/cards/:id/skip", async (c) => {
   return c.json({ skipped: true });
 });
 
+app.post("/api/cards/:id/thumbs-up", async (c) => {
+  const card = await getCard(c.req.param("id"));
+  if (!card) return c.json({ error: "not found" }, 404);
+  try {
+    await sendSMS(card.phone, "👍", card.contactId);
+    await updateStatus(card.cardId, "sent", { draftResponse: "👍" });
+    return c.json({ sent: true });
+  } catch (err) {
+    return c.json({ error: String(err) }, 500);
+  }
+});
+
 app.post("/api/cards/:id/edit", async (c) => {
   const card = await getCard(c.req.param("id"));
   if (!card) return c.json({ error: "not found" }, 404);

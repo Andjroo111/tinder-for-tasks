@@ -185,6 +185,7 @@ function attachGestures(el, card) {
     if (dx > 40 && Math.abs(dy) < Math.abs(dx)) color = [34, 197, 94];
     else if (dx < -40 && Math.abs(dy) < Math.abs(dx)) color = [239, 68, 68];
     else if (dy > 40) color = [249, 115, 22];
+    else if (dy < -40) color = [99, 179, 237];
 
     if (color) {
       const [r, g, b] = color;
@@ -216,6 +217,9 @@ function attachGestures(el, card) {
     } else if (dy > threshold) {
       el.classList.add("out-down");
       setTimeout(() => openSnooze(card), 250);
+    } else if (dy < -threshold) {
+      el.classList.add("out-up");
+      setTimeout(() => thumbsUp(card), 250);
     } else {
       el.style.transform = "";
       el.style.boxShadow = "";
@@ -246,6 +250,13 @@ async function skip(card) {
   stamp(card, "red");
   await api(`/api/cards/${card.cardId}/skip`, { method: "POST" });
   setTimeout(load, 300);
+}
+
+async function thumbsUp(card) {
+  stamp(card, "blue");
+  const res = await api(`/api/cards/${card.cardId}/thumbs-up`, { method: "POST" });
+  if (res.sent) setTimeout(load, 300);
+  else { alert(res.error || "Failed to send 👍"); load(); }
 }
 
 function previewSnoozeTime(hour) {
@@ -540,6 +551,7 @@ const STAMPS = {
   green:  ["SENT 🚀", "BOOM!", "YEET", "SHIPPED", "DELIVERED", "NAILED IT", "LET'S GO"],
   red:    ["NOPE", "PASS", "SKIPPED", "BYE 👋", "HARD PASS", "NEXT", "NAH"],
   orange: ["ZZZ 😴", "LATER", "SNOOZED", "CATCH YA", "TALK SOON", "ON ICE"],
+  blue:   ["👍", "THUMBS UP", "ACK'D", "ROGER", "COPY THAT", "NICE"],
 };
 function stamp(card, tone) {
   const list = STAMPS[tone] || STAMPS.green;
