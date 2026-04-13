@@ -32,6 +32,8 @@ async function load() {
 function updateBadge() {
   badgeEl.textContent = cards.length;
   badgeEl.classList.toggle("has", cards.length > 0);
+  const nextBtn = $("#next-btn");
+  if (nextBtn) nextBtn.hidden = cards.length < 2;
 }
 
 function formatAge(iso) {
@@ -63,9 +65,10 @@ function buildCard(card) {
   el.className = `card tier-${card.tier}`;
   el.dataset.cardId = card.cardId;
 
+  const pos = cards.length > 1 ? `<span class="pos-indicator">1 of ${cards.length}</span>` : "";
   const head = `
     <div class="card-head">
-      <div class="card-name">${escape(card.contactName)}${card.dogName ? ` · ${escape(card.dogName)}` : ""}</div>
+      <div class="card-name">${escape(card.contactName)}${card.dogName ? ` · ${escape(card.dogName)}` : ""}${pos}</div>
       <div class="card-age">⏱ ${formatAge(card.createdAt)}</div>
     </div>
   `;
@@ -123,12 +126,26 @@ function renderCalDay(day) {
       ${day.note ? `<span class="cal-day-note">${escape(day.note)}</span>` : ""}
     </div>
     ${day.blocks.map((b) => `
-      <div class="cal-block ${b.status}">
+      <div class="cal-block ${b.status}" ${b.status === "open" ? `data-slot="${day.date}|${b.start}|${b.end}|${weekday}|${pretty}"` : ""}>
         <span class="time">${b.start}–${b.end}</span>
-        <span class="status">${b.status === "open" ? "OPEN" : "BLOCKED" + (b.label ? " · " + escape(b.label) : "")}</span>
+        <span class="status">${b.status === "open" ? "OPEN ›" : "BLOCKED" + (b.label ? " · " + escape(b.label) : "")}</span>
       </div>
     `).join("")}
   </div>`;
+}
+
+function formatTime12(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const period = h >= 12 ? "pm" : "am";
+  const hour12 = ((h + 11) % 12) + 1;
+  return m === 0 ? `${hour12}${period}` : `${hour12}:${String(m).padStart(2, "0")}${period}`;
+}
+
+function buildSlotDraft(card, dayName, prettyDate, start, end) {
+  const name = (card.contactName || "").split(" ")[0] || "";
+  const startStr = formatTime12(start);
+  const endStr = formatTime12(end);
+  return `Hey${name ? " " + name : ""}! I've got an opening ${dayName} at ${startStr}—would that work?`;
 }
 
 function fmtSlot(iso) {
@@ -154,6 +171,16 @@ function attachGestures(el, card) {
       if (action === "approve") approve(card);
       else if (action === "skip") skip(card);
       else if (action === "snooze") openSnooze(card);
+    });
+  });
+
+  // Tappable open slots — opens edit sheet with a draft referencing that time
+  el.querySelectorAll(".cal-block.open[data-slot]").forEach((slot) => {
+    slot.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const [date, start, end, weekday, pretty] = slot.dataset.slot.split("|");
+      const prefill = buildSlotDraft(card, weekday, pretty, start, end);
+      openEdit(card, prefill);
     });
   });
 
@@ -339,11 +366,11 @@ function openSnooze(card) {
   };
 }
 
-function openEdit(card) {
+function openEdit(card, prefill) {
   const sheet = $("#edit-sheet");
   const textEl = $("#edit-text");
   const tagsEl = $("#edit-tags");
-  textEl.value = card.draftResponse;
+  textEl.value = prefill || card.draftResponse;
   tagsEl.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
   sheet.hidden = false;
 
@@ -556,6 +583,13 @@ $("#mode-toggle").addEventListener("click", async () => {
 });
 
 $("#refresh-btn").addEventListener("click", load);
+$("#next-btn").addEventListener("click", () => {
+  if (cards.length < 2) return;
+  // Rotate: move top card to the back locally so you can peek ahead without acting
+  const top = cards.shift();
+  cards.push(top);
+  render();
+});
 
 const STAMPS = {
   green:  ["SENT 🚀", "BOOM!", "YEET", "SHIPPED", "DELIVERED", "NAILED IT", "LET'S GO"],

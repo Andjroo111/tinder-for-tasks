@@ -9,14 +9,17 @@
 <meta name="apple-mobile-web-app-title" content="Tasks">
 <link rel="manifest" href="/manifest.json">
 <title>Tinder for Tasks</title>
-<link rel="stylesheet" href="/style.css?v=11">
+<link rel="stylesheet" href="/style.css?v=12">
 </head>
 <body>
 <div id="app">
   <header id="header">
     <div class="badge" id="pending-count">0</div>
     <button class="mode-toggle" id="mode-toggle" aria-label="Mode">TEST</button>
-    <button class="icon-btn" id="refresh-btn" aria-label="Refresh">↻</button>
+    <div class="header-right">
+      <button class="icon-btn" id="next-btn" aria-label="Next card">›</button>
+      <button class="icon-btn" id="refresh-btn" aria-label="Refresh">↻</button>
+    </div>
   </header>
 
   <main id="stack"></main>
@@ -79,7 +82,7 @@
 
 
 </div>
-<script src="/app.js?v=11" type="module"></script>
+<script src="/app.js?v=12" type="module"></script>
 <script>
 // Nuke any old caches on every load + forcibly update the service worker
 (async () => {

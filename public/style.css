@@ -60,6 +60,21 @@ html, body {
   font-size: 22px; width: 36px; height: 36px; border-radius: 18px;
 }
 .icon-btn:active { background: var(--surface); }
+.header-right { display: flex; gap: 2px; }
+#next-btn { font-size: 26px; color: var(--accent); }
+.cal-block.open[data-slot] {
+  cursor: pointer;
+  transition: background 0.15s;
+  margin: 0 -4px; padding: 4px 4px;
+  border-radius: 6px;
+}
+.cal-block.open[data-slot]:active {
+  background: rgba(34,197,94,0.2);
+}
+.pos-indicator {
+  font-size: 11px; color: var(--muted);
+  margin-left: 8px; letter-spacing: 0.5px;
+}
 
 #stack {
   flex: 1; position: relative; overflow: hidden;
