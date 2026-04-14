@@ -523,9 +523,8 @@ async function loadDashboard() {
   list.innerHTML = `<div class="act-section-label">Recent activity · ${ordered.length} people</div>` +
     ordered.map((g, gi) => {
       const latest = g.items[0];
-      const open = gi === 0 ? " open" : "";
       return `
-        <div class="act-group${open}" data-group="${gi}">
+        <div class="act-group" data-group="${gi}">
           <button class="act-group-head" data-toggle="${gi}">
             <div class="act-icon ${latest.action}">${ACT_ICON[latest.action] || "·"}</div>
             <div class="act-body">
