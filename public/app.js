@@ -508,9 +508,9 @@ async function loadDashboard() {
   }
   summary.textContent = `${todayEntries.length} handled today`;
 
-  // Group by contact (contactId falls back to contactName)
+  // Group by contact — today only (resets at midnight)
   const groups = new Map();
-  for (const e of entries) {
+  for (const e of todayEntries) {
     const key = e.contactId || e.contactName;
     if (!groups.has(key)) groups.set(key, { name: e.contactName, items: [] });
     groups.get(key).items.push(e);
@@ -760,15 +760,7 @@ $("#next-btn").addEventListener("click", () => {
   render();
 });
 
-const STAMPS = { green: "SENT", red: "SKIP", orange: "SNOOZED", blue: "THUMBS UP" };
-function stamp(card, tone) {
-  const cardEl = document.querySelector(`.card[data-card-id="${card.cardId}"]`);
-  if (!cardEl) return;
-  const el = document.createElement("div");
-  el.className = `stamp ${tone}`;
-  el.textContent = STAMPS[tone] || "DONE";
-  cardEl.appendChild(el);
-}
+function stamp() { /* stamps removed */ }
 function toast() {} // legacy no-op
 
 if ("serviceWorker" in navigator) {
