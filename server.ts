@@ -134,7 +134,7 @@ app.post("/api/cards/:id/schedule-approve", async (c) => {
     await logActivity({
       action: "sent",
       contactName: card.contactName,
-      contactId: card.contactId,
+      contactId: card.contactId, dogName: card.dogName,
       preview: `scheduling override approved: ${card.draftResponse.slice(0, 80)}`,
       at: new Date().toISOString(),
     });
@@ -173,7 +173,7 @@ app.post("/api/cards/:id/schedule-reject", async (c) => {
     await logActivity({
       action: "skipped",
       contactName: card.contactName,
-      contactId: card.contactId,
+      contactId: card.contactId, dogName: card.dogName,
       preview: "scheduling override rejected — offered alt slots",
       at: new Date().toISOString(),
     });
@@ -194,7 +194,7 @@ app.post("/api/cards/:id/approve", async (c) => {
   try {
     await sendSMS(card.phone, card.draftResponse, card.contactId);
     await updateStatus(card.cardId, "sent");
-    await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, preview: card.draftResponse.slice(0, 100), at: new Date().toISOString() });
+    await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, preview: card.draftResponse.slice(0, 100), at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
@@ -204,7 +204,7 @@ app.post("/api/cards/:id/approve", async (c) => {
 app.post("/api/cards/:id/skip", async (c) => {
   const card = await updateStatus(c.req.param("id"), "skipped");
   if (!card) return c.json({ error: "not found" }, 404);
-  await logActivity({ action: "skipped", contactName: card.contactName, contactId: card.contactId, at: new Date().toISOString() });
+  await logActivity({ action: "skipped", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, at: new Date().toISOString() });
   return c.json({ skipped: true });
 });
 
@@ -214,7 +214,7 @@ app.post("/api/cards/:id/thumbs-up", async (c) => {
   try {
     await sendSMS(card.phone, "👍", card.contactId);
     await updateStatus(card.cardId, "sent", { draftResponse: "👍" });
-    await logActivity({ action: "thumbs_up", contactName: card.contactName, contactId: card.contactId, preview: "👍", at: new Date().toISOString() });
+    await logActivity({ action: "thumbs_up", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, preview: "👍", at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
@@ -244,7 +244,7 @@ app.post("/api/cards/:id/edit", async (c) => {
       timestamp: new Date().toISOString(),
     });
     await updateStatus(card.cardId, "sent", { draftResponse: body.editedDraft });
-    await logActivity({ action: "edited", contactName: card.contactName, contactId: card.contactId, preview: body.editedDraft.slice(0, 100), at: new Date().toISOString() });
+    await logActivity({ action: "edited", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, preview: body.editedDraft.slice(0, 100), at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
@@ -290,7 +290,7 @@ app.post("/api/cards/:id/snooze", async (c) => {
   }
   const card = await snoozeCard(c.req.param("id"), until.toISOString());
   if (!card) return c.json({ error: "not found" }, 404);
-  await logActivity({ action: "snoozed", contactName: card.contactName, contactId: card.contactId, preview: `until ${until.toLocaleString()}`, at: new Date().toISOString() });
+  await logActivity({ action: "snoozed", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, preview: `until ${until.toLocaleString()}`, at: new Date().toISOString() });
   return c.json({ snoozedUntil: until.toISOString() });
 });
 

@@ -158,6 +158,7 @@ export interface ActivityEntry {
   action: ActivityAction;
   contactName: string;
   contactId: string;
+  dogName?: string;
   preview?: string;
   at: string;
 }

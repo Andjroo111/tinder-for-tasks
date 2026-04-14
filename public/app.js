@@ -529,7 +529,7 @@ async function loadDashboard() {
             <div class="act-icon ${latest.action}">${ACT_ICON[latest.action] || "·"}</div>
             <div class="act-body">
               <div class="act-head">
-                <span class="act-name">${escape(g.name)}</span>
+                <span class="act-name">${escape(g.name)}${latest.dogName ? ` · ${escape(latest.dogName)}` : ""}</span>
                 <span class="act-time">${formatAge(latest.at)}</span>
               </div>
               <div class="act-sub">${ACT_VERB[latest.action] || latest.action} · ${g.items.length} action${g.items.length === 1 ? "" : "s"}</div>
