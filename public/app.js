@@ -535,6 +535,7 @@ async function loadDashboard() {
               </div>
               <div class="act-sub">${ACT_VERB[latest.action] || latest.action} · ${g.items.length} action${g.items.length === 1 ? "" : "s"}</div>
             </div>
+            <span class="card-info-btn act-info-btn" data-action="summary" data-contact-id="${latest.contactId}" data-contact-name="${escape(g.name)}" aria-label="Summary">i</span>
             <span class="act-chev">›</span>
           </button>
           <div class="act-group-body">

@@ -302,7 +302,18 @@ app.get("/api/auto-sends", async (c) => {
 app.get("/api/activity", async (c) => {
   const limit = Number(c.req.query("limit") || 20);
   const entries = await listActivity(limit);
-  return c.json({ entries });
+  // Enrich with vault data (dogName, phone) for entries logged before those fields existed
+  const { getSummary } = await import("./lib/vault");
+  const enriched = entries.map((e) => {
+    if (e.dogName && e.phone) return e;
+    const s = getSummary(e.contactId, e.contactName);
+    return {
+      ...e,
+      dogName: e.dogName || s?.dog,
+      phone: e.phone || s?.phone,
+    };
+  });
+  return c.json({ entries: enriched });
 });
 
 app.get("/api/contacts/:contactId/summary", async (c) => {
@@ -330,6 +341,25 @@ app.post("/api/send", async (c) => {
     const { getSummary } = await import("./lib/vault");
     const s = getSummary(body.contactId, body.contactName);
     phone = s?.phone;
+  }
+  if (!phone) {
+    // Fallback: look up GHL directly
+    try {
+      const r = await fetch(
+        `https://services.leadconnectorhq.com/contacts/${body.contactId}`,
+        {
+          headers: {
+            Authorization: "Bearer REDACTED_GHL_PIT",
+            Version: "2021-07-28",
+            Accept: "application/json",
+          },
+        }
+      );
+      if (r.ok) {
+        const data = (await r.json()) as { contact?: { phone?: string } };
+        phone = data.contact?.phone || undefined;
+      }
+    } catch {}
   }
   if (!phone) return c.json({ error: "no phone on file for contact" }, 404);
   try {
