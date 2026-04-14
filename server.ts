@@ -300,8 +300,18 @@ app.get("/api/auto-sends", async (c) => {
 });
 
 app.get("/api/activity", async (c) => {
-  const entries = await listActivity(20);
+  const limit = Number(c.req.query("limit") || 20);
+  const entries = await listActivity(limit);
   return c.json({ entries });
+});
+
+app.get("/api/contacts/:contactId/summary", async (c) => {
+  const { getSummary } = await import("./lib/vault");
+  const contactId = c.req.param("contactId");
+  const name = c.req.query("name") || undefined;
+  const s = getSummary(contactId, name);
+  if (!s) return c.json({ error: "not found" }, 404);
+  return c.json(s);
 });
 
 app.get("/api/dashboard", async (c) => {

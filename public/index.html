@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Tasks">
 <link rel="manifest" href="/manifest.json">
 <title>Tinder for Tasks</title>
-<link rel="stylesheet" href="/style.css?v=20">
+<link rel="stylesheet" href="/style.css?v=21">
 </head>
 <body>
 <div id="app">
@@ -55,6 +55,14 @@
     </div>
   </div>
 
+  <div id="summary-sheet" class="sheet" hidden>
+    <div class="sheet-inner summary-inner">
+      <h3 id="summary-title">Summary</h3>
+      <div id="summary-body"></div>
+      <button class="cancel" id="summary-close">Close</button>
+    </div>
+  </div>
+
   <div id="edit-sheet" class="sheet" hidden>
     <div class="sheet-inner edit-inner">
       <h3>Edit draft</h3>
@@ -85,7 +93,7 @@
 
 
 </div>
-<script src="/app.js?v=20" type="module"></script>
+<script src="/app.js?v=21" type="module"></script>
 <script>
 // Nuke any old caches on every load + forcibly update the service worker
 (async () => {

@@ -675,6 +675,43 @@ body::before {
   border: 1px solid rgba(44,41,119,0.3);
 }
 
+/* Card info (i) button */
+.card-info-btn {
+  margin-left: 8px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(160,140,255,0.15);
+  border: 1px solid rgba(160,140,255,0.45);
+  color: var(--lavender);
+  font-family: var(--font-heading); font-style: italic; font-weight: 700;
+  font-size: 13px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.card-info-btn:active { transform: scale(0.92); }
+
+/* Summary sheet */
+.summary-inner { max-width: 440px; }
+.summary-loading, .summary-empty { color: var(--muted); text-align: center; padding: 24px 0; font-size: 14px; }
+.summary-challenges {
+  background: rgba(7,237,190,0.08);
+  border: 1px solid rgba(7,237,190,0.3);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+}
+.summary-label {
+  font-family: var(--font-heading); font-size: 10px; letter-spacing: 2px;
+  color: var(--teal); text-transform: uppercase; margin-bottom: 6px;
+}
+.summary-text { color: var(--text); font-size: 14px; line-height: 1.4; }
+.summary-rows { display: flex; flex-direction: column; gap: 8px; }
+.summary-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 12px; background: rgba(10,9,26,0.5);
+  border: 1px solid rgba(44,41,119,0.4); border-radius: 10px;
+  font-size: 13px;
+}
+.summary-row span { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+.summary-row strong { color: var(--text); font-weight: 600; }
+
 /* Pull-to-refresh indicator */
 #ptr-indicator {
   position: fixed; top: -50px; left: 50%;

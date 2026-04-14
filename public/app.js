@@ -71,6 +71,7 @@ function buildCard(card) {
   const head = `
     <div class="card-head">
       <div class="card-name">${escape(card.contactName)}${card.dogName ? ` · ${escape(card.dogName)}` : ""}${pos}</div>
+      <button class="card-info-btn" data-action="summary" data-contact-id="${card.contactId}" data-contact-name="${escape(card.contactName)}" aria-label="Summary">i</button>
       <div class="card-age">⏱ ${formatAge(card.createdAt)}</div>
     </div>
   `;
@@ -707,6 +708,43 @@ $("#mode-toggle").addEventListener("click", async () => {
   if (res.error) { alert(res.error); return; }
   loadMode();
 });
+
+// Summary sheet
+async function openSummary(contactId, contactName) {
+  const sheet = $("#summary-sheet");
+  const body = $("#summary-body");
+  const title = $("#summary-title");
+  title.textContent = contactName;
+  body.innerHTML = `<div class="summary-loading">Loading…</div>`;
+  sheet.hidden = false;
+  try {
+    const res = await fetch(`/api/contacts/${contactId}/summary?name=${encodeURIComponent(contactName)}`, { credentials: "same-origin" });
+    if (!res.ok) {
+      body.innerHTML = `<div class="summary-empty">No vault notes yet for ${escape(contactName)}.</div>`;
+      return;
+    }
+    const s = await res.json();
+    const rows = [
+      s.dog && ["Dog", s.dog],
+      s.service && ["Service", s.service.replace(/-/g, " ")],
+      s.stage && ["Stage", s.stage],
+      s.status && ["Status", s.status],
+    ].filter(Boolean);
+    body.innerHTML =
+      (s.challenges ? `<div class="summary-challenges"><div class="summary-label">Challenges</div><div class="summary-text">${escape(s.challenges)}</div></div>` : "") +
+      `<div class="summary-rows">${rows.map(([k, v]) => `<div class="summary-row"><span>${k}</span><strong>${escape(v)}</strong></div>`).join("")}</div>`;
+  } catch (e) {
+    body.innerHTML = `<div class="summary-empty">Error loading.</div>`;
+  }
+}
+$("#summary-close").addEventListener("click", () => { $("#summary-sheet").hidden = true; });
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".card-info-btn");
+  if (!btn) return;
+  e.stopPropagation();
+  openSummary(btn.dataset.contactId, btn.dataset.contactName);
+}, true);
 
 // Pull-to-refresh
 (() => {
