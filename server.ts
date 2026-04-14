@@ -71,7 +71,11 @@ app.post("/api/cards", async (c) => {
     payload.triggerEvent === "scheduling_override" ||
     payload.cardType === "scheduling_override";
 
-  if (!isSchedulingOverride && (payload.tier === 1 || payload.tier === 2)) {
+  // AUTO-SEND DISABLED (2026-04-13): every card requires Andrew's swipe.
+  // Force anything tier 1/2 up to tier 3 so it shows on the stack.
+  if (payload.tier < 3) payload.tier = 3;
+
+  if (false && !isSchedulingOverride && (payload.tier === 1 || payload.tier === 2)) {
     try {
       await sendSMS(payload.phone, payload.draftResponse, payload.contactId);
       await logAutoSend({
