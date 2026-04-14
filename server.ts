@@ -195,9 +195,13 @@ app.get("/api/cards", async (c) => {
 app.post("/api/cards/:id/approve", async (c) => {
   const card = await getCard(c.req.param("id"));
   if (!card) return c.json({ error: "not found" }, 404);
+  if (card.status === "sent" || card.status === "skipped") {
+    return c.json({ sent: true, alreadyProcessed: true });
+  }
+  // Mark sent FIRST to prevent double-send on rapid repeat calls
+  await updateStatus(card.cardId, "sent");
   try {
     await sendSMS(card.phone, card.draftResponse, card.contactId);
-    await updateStatus(card.cardId, "sent");
     await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, phone: card.phone, preview: card.draftResponse.slice(0, 100), at: new Date().toISOString() });
     return c.json({ sent: true });
   } catch (err) {

@@ -341,11 +341,18 @@ function attachGestures(el, card) {
   });
 }
 
+const _approveInFlight = new Set();
 async function approve(card) {
+  if (_approveInFlight.has(card.cardId)) return;
+  _approveInFlight.add(card.cardId);
   stamp(card, "green");
-  const res = await api(`/api/cards/${card.cardId}/approve`, { method: "POST" });
-  if (res.sent) { setTimeout(load, 300); }
-  else { alert(res.error || "Failed to send"); load(); }
+  try {
+    const res = await api(`/api/cards/${card.cardId}/approve`, { method: "POST" });
+    if (res.sent) { setTimeout(load, 300); }
+    else { alert(res.error || "Failed to send"); load(); }
+  } finally {
+    setTimeout(() => _approveInFlight.delete(card.cardId), 2000);
+  }
 }
 
 async function skip(card) {
