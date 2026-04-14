@@ -799,15 +799,13 @@ async function openSummary(contactId, contactName) {
       return;
     }
     const s = await res.json();
-    const rows = [
-      s.dog && ["Dog", s.dog],
-      s.service && ["Service", s.service.replace(/-/g, " ")],
-      s.stage && ["Stage", s.stage],
-      s.status && ["Status", s.status],
-    ].filter(Boolean);
-    body.innerHTML =
-      (s.challenges ? `<div class="summary-challenges"><div class="summary-label">Challenges</div><div class="summary-text">${escape(s.challenges)}</div></div>` : "") +
-      `<div class="summary-rows">${rows.map(([k, v]) => `<div class="summary-row"><span>${k}</span><strong>${escape(v)}</strong></div>`).join("")}</div>`;
+    const BUCKET_LABEL = { active: "Active client", prospect: "Prospect", alumni: "Alumni", dead: "Dead lead", unknown: "Unknown" };
+    const bucketBadge = s.bucket ? `<div class="summary-badge ${s.bucket}">${BUCKET_LABEL[s.bucket] || s.bucket}</div>` : "";
+    const dogLine = s.dog ? `<div class="summary-dog">Dog: <strong>${escape(s.dog)}</strong></div>` : "";
+    const synopsis = s.synopsis
+      ? `<div class="summary-challenges"><div class="summary-label">Synopsis</div><div class="summary-text">${escape(s.synopsis).replace(/\n/g, "<br>")}</div></div>`
+      : `<div class="summary-empty">No notes yet for ${escape(contactName)}.</div>`;
+    body.innerHTML = bucketBadge + dogLine + synopsis;
   } catch (e) {
     body.innerHTML = `<div class="summary-empty">Error loading.</div>`;
   }

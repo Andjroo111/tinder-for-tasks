@@ -714,15 +714,19 @@ body::before {
   color: var(--teal); text-transform: uppercase; margin-bottom: 6px;
 }
 .summary-text { color: var(--text); font-size: 14px; line-height: 1.4; }
-.summary-rows { display: flex; flex-direction: column; gap: 8px; }
-.summary-row {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 10px 12px; background: rgba(10,9,26,0.5);
-  border: 1px solid rgba(44,41,119,0.4); border-radius: 10px;
-  font-size: 13px;
+.summary-badge {
+  display: inline-block; padding: 4px 12px; border-radius: 999px;
+  font-family: var(--font-heading); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+  margin-bottom: 10px;
 }
-.summary-row span { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
-.summary-row strong { color: var(--text); font-weight: 600; }
+.summary-badge.active { background: rgba(7,237,190,0.18); color: var(--teal); border: 1px solid rgba(7,237,190,0.45); }
+.summary-badge.prospect { background: rgba(160,140,255,0.18); color: var(--lavender); border: 1px solid rgba(160,140,255,0.45); }
+.summary-badge.alumni { background: rgba(255,126,192,0.15); color: var(--pink); border: 1px solid rgba(255,126,192,0.4); }
+.summary-badge.dead { background: rgba(120,120,140,0.15); color: var(--muted); border: 1px solid rgba(120,120,140,0.35); }
+.summary-badge.unknown { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
+.summary-dog { font-size: 14px; margin-bottom: 12px; color: var(--muted); }
+.summary-dog strong { color: var(--text); font-weight: 600; }
+.summary-challenges .summary-text { max-height: 50vh; overflow-y: auto; }
 
 /* Pull-to-refresh indicator */
 #ptr-indicator {

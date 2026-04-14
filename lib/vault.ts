@@ -6,10 +6,8 @@ const VAULT_ROOT = process.env.GDKC_VAULT_PATH || "/Users/andjroo/gdkc/GDKC-Vaul
 export interface VaultSummary {
   name: string;
   dog?: string;
-  stage?: string;
-  status?: string;
-  service?: string;
-  challenges?: string;
+  bucket?: "active" | "prospect" | "alumni" | "dead" | "unknown";
+  synopsis?: string;
   contactId?: string;
   phone?: string;
 }
@@ -44,13 +42,48 @@ function parseFile(path: string): VaultSummary | null {
   const challengesMatch = text.match(/Challenges\s*\|\s*(.+?)\s*\|/);
   const phoneMatch = text.match(/\|\s*Phone\s*\|\s*(\+?\d[\d\s\-().]+)\s*\|/);
 
+  // Derive bucket from folder path
+  const folder = path.split("/").slice(-2)[0] || "";
+  let bucket: VaultSummary["bucket"] = "unknown";
+  if (folder.startsWith("Active")) bucket = "active";
+  else if (folder === "Pipeline") bucket = "prospect";
+  else if (folder === "Alumni") bucket = "alumni";
+  else if (folder === "Dead-Leads") bucket = "dead";
+
+  // Build synopsis: challenges + consultation transcript excerpt + latest session/homework
+  const pieces: string[] = [];
+  if (challengesMatch && challengesMatch[1] !== "—") {
+    pieces.push(challengesMatch[1].trim());
+  }
+  const consultMatch = text.match(/## Consultation[s]?(?: Transcript)?\s*\n([\s\S]*?)(?=\n## |\n---|\n$)/);
+  if (consultMatch) {
+    const consult = consultMatch[1]
+      .replace(/^>\s*\[!note\].*$/gm, "")
+      .replace(/^#+\s.*$/gm, "")
+      .replace(/\*\*/g, "")
+      .trim();
+    if (consult && !/no transcript/i.test(consult)) {
+      pieces.push(consult.slice(0, 600));
+    }
+  }
+  const sessionsMatch = text.match(/## Sessions?\s*\n([\s\S]*?)(?=\n## |\n---|\n$)/);
+  if (sessionsMatch) {
+    const sessions = sessionsMatch[1].trim();
+    if (sessions && !/no session/i.test(sessions)) {
+      pieces.push("Sessions: " + sessions.slice(0, 300));
+    }
+  }
+  const commLogMatch = text.match(/## Communication Log\s*\n([\s\S]*?)(?=\n## |\n---|\n$)/);
+  if (commLogMatch) {
+    const lines = commLogMatch[1].trim().split("\n").slice(-3).join("\n");
+    if (lines) pieces.push("Recent: " + lines.slice(0, 300));
+  }
+
   return {
     name: fm.client || path.split("/").pop()!.replace(".md", ""),
     dog: fm.dog && fm.dog !== "Unknown" ? fm.dog : undefined,
-    stage: fm.stage || undefined,
-    status: fm.status || undefined,
-    service: fm.service || undefined,
-    challenges: challengesMatch && challengesMatch[1] !== "—" ? challengesMatch[1].trim() : undefined,
+    bucket,
+    synopsis: pieces.join("\n\n") || undefined,
     contactId: idMatch ? idMatch[1] : undefined,
     phone: phoneMatch ? phoneMatch[1].trim() : undefined,
   };

@@ -309,8 +309,8 @@ app.get("/api/activity", async (c) => {
     const s = getSummary(e.contactId, e.contactName);
     return {
       ...e,
-      dogName: e.dogName || s?.dog,
-      phone: e.phone || s?.phone,
+      dogName: e.dogName || s?.dog || undefined,
+      phone: e.phone || s?.phone || undefined,
     };
   });
   return c.json({ entries: enriched });
