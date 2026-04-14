@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch server.ts",
-    "start": "bun server.ts",
-    "seed": "bun scripts/seed.ts"
+    "dev": "bun --watch --env-file=$HOME/.credentials/mcp-keys/all-keys.env server.ts",
+    "start": "bun --env-file=$HOME/.credentials/mcp-keys/all-keys.env server.ts",
+    "seed": "bun --env-file=$HOME/.credentials/mcp-keys/all-keys.env scripts/seed.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -19,6 +19,10 @@ import { isAuthEnabled, verifyPassword, makeToken, verifyToken, cookieHeader, pa
 import { getMode, setMode } from "./lib/mode";
 import type { CardCreatePayload } from "./lib/types";
 
+if (!process.env.GHL_BEARER_TOKEN) {
+  throw new Error("GHL_BEARER_TOKEN not set — launch via `bun run dev|start` so --env-file loads ~/.credentials/mcp-keys/all-keys.env");
+}
+
 const app = new Hono();
 
 app.use("*", async (c, next) => {
@@ -349,7 +353,7 @@ app.post("/api/send", async (c) => {
         `https://services.leadconnectorhq.com/contacts/${body.contactId}`,
         {
           headers: {
-            Authorization: "Bearer pit-5f68873a-376a-451b-8713-83a6f43f0ec9",
+            Authorization: `Bearer ${process.env.GHL_BEARER_TOKEN}`,
             Version: "2021-07-28",
             Accept: "application/json",
           },
