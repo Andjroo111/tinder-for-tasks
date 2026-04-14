@@ -538,6 +538,9 @@ async function loadDashboard() {
             <span class="act-chev">›</span>
           </button>
           <div class="act-group-body">
+            <button class="act-send-btn" data-contact-id="${latest.contactId}" data-contact-name="${escape(g.name)}" data-dog-name="${escape(latest.dogName || "")}" data-phone="${escape(latest.phone || "")}">
+              <span>📨</span> Send follow-up
+            </button>
             ${g.items.map((e) => `
               <div class="act-item">
                 <div class="act-icon ${e.action}">${ACT_ICON[e.action] || "·"}</div>
@@ -565,9 +568,11 @@ async function loadDashboard() {
 let mediaRecorder = null;
 let audioChunks = [];
 let recordingStream = null;
+let micBtnSelector = "#mic-btn";
+let micTargetSelector = "#edit-text";
 
 function setMicLabel(text) {
-  const label = document.querySelector("#mic-btn .mic-label");
+  const label = document.querySelector(`${micBtnSelector} .mic-label`);
   if (label) label.textContent = text;
 }
 
@@ -585,7 +590,7 @@ function releaseStream() {
 }
 
 async function startRecording() {
-  const btn = $("#mic-btn");
+  const btn = $(micBtnSelector);
   if (!window.isSecureContext) {
     setMicLabel("Mic needs HTTPS");
     return;
@@ -617,12 +622,12 @@ function stopRecording() {
   if (mediaRecorder && mediaRecorder.state === "recording") {
     mediaRecorder.stop();
   }
-  const btn = $("#mic-btn");
+  const btn = $(micBtnSelector);
   btn.classList.remove("recording");
 }
 
 async function onRecordingStopped() {
-  const btn = $("#mic-btn");
+  const btn = $(micBtnSelector);
   const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
   audioChunks = [];
   if (blob.size < 1000) {
@@ -636,7 +641,7 @@ async function onRecordingStopped() {
     const res = await fetch("/api/transcribe", { method: "POST", body: form });
     const data = await res.json();
     if (data.text) {
-      const ta = $("#edit-text");
+      const ta = $(micTargetSelector);
       const before = ta.value;
       const sep = before && !/\s$/.test(before) ? " " : "";
       ta.value = before + sep + data.text;
@@ -655,8 +660,8 @@ async function onRecordingStopped() {
   }
 }
 
-function attachMicButton() {
-  const btn = $("#mic-btn");
+function attachMicButton(sel) {
+  const btn = $(sel || micBtnSelector);
   if (btn._attached) return;
   btn._attached = true;
   let active = false;
@@ -683,7 +688,76 @@ function attachMicButton() {
   // Safety: if mouse leaves window while recording
   window.addEventListener("blur", () => { if (active) up({ preventDefault() {} }); });
 }
-attachMicButton();
+attachMicButton("#mic-btn");
+attachMicButton("#compose-mic");
+
+// Compose (send follow-up) sheet
+let composeCtx = null;
+function openCompose({ contactId, contactName, dogName, phone }) {
+  composeCtx = { contactId, contactName, dogName, phone };
+  $("#compose-title").textContent = `To ${contactName}${dogName ? ` · ${dogName}` : ""}`;
+  $("#compose-text").value = "";
+  $("#compose-sheet").hidden = false;
+  setTimeout(() => $("#compose-text").focus(), 100);
+}
+$("#compose-cancel").addEventListener("click", () => {
+  $("#compose-sheet").hidden = true;
+  composeCtx = null;
+});
+$("#compose-send").addEventListener("click", async () => {
+  if (!composeCtx) return;
+  const msg = $("#compose-text").value.trim();
+  if (!msg) return;
+  const btn = $("#compose-send");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+  try {
+    const res = await api("/api/send", {
+      method: "POST",
+      body: JSON.stringify({ ...composeCtx, message: msg }),
+    });
+    if (res.error) {
+      btn.textContent = "Send";
+      btn.disabled = false;
+      alert(res.error);
+      return;
+    }
+    $("#compose-sheet").hidden = true;
+    composeCtx = null;
+    await loadDashboard();
+  } catch (e) {
+    btn.textContent = "Send";
+    btn.disabled = false;
+    alert("Failed: " + e);
+  } finally {
+    btn.textContent = "Send";
+    btn.disabled = false;
+  }
+});
+// When compose sheet opens/closes, swap mic target
+const composeSheet = $("#compose-sheet");
+new MutationObserver(() => {
+  if (!composeSheet.hidden) {
+    micBtnSelector = "#compose-mic";
+    micTargetSelector = "#compose-text";
+  } else {
+    micBtnSelector = "#mic-btn";
+    micTargetSelector = "#edit-text";
+  }
+}).observe(composeSheet, { attributes: true, attributeFilter: ["hidden"] });
+
+// Wire the "Send message" button added to each activity group body
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".act-send-btn");
+  if (!btn) return;
+  e.stopPropagation();
+  openCompose({
+    contactId: btn.dataset.contactId,
+    contactName: btn.dataset.contactName,
+    dogName: btn.dataset.dogName || undefined,
+    phone: btn.dataset.phone || undefined,
+  });
+});
 
 async function loadMode() {
   const btn = $("#mode-toggle");

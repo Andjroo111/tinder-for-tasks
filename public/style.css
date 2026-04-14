@@ -674,6 +674,18 @@ body::before {
   background: rgba(10,9,26,0.5);
   border: 1px solid rgba(44,41,119,0.3);
 }
+.act-send-btn {
+  width: 100%; margin: 4px 0 10px;
+  padding: 12px; border-radius: 12px;
+  background: rgba(7,237,190,0.12);
+  border: 1px solid rgba(7,237,190,0.45);
+  color: var(--teal);
+  font-family: var(--font-heading);
+  font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  cursor: pointer;
+}
+.act-send-btn:active { transform: scale(0.98); }
 
 /* Card info (i) button */
 .card-info-btn {

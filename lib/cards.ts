@@ -159,6 +159,7 @@ export interface ActivityEntry {
   contactName: string;
   contactId: string;
   dogName?: string;
+  phone?: string;
   preview?: string;
   at: string;
 }

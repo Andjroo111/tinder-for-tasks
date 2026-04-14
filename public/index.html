@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Tasks">
 <link rel="manifest" href="/manifest.json">
 <title>Tinder for Tasks</title>
-<link rel="stylesheet" href="/style.css?v=21">
+<link rel="stylesheet" href="/style.css?v=22">
 </head>
 <body>
 <div id="app">
@@ -55,6 +55,22 @@
     </div>
   </div>
 
+  <div id="compose-sheet" class="sheet" hidden>
+    <div class="sheet-inner edit-inner">
+      <h3 id="compose-title">Send message</h3>
+      <textarea id="compose-text" rows="4" placeholder="Type or dictate a follow-up…"></textarea>
+      <button id="compose-mic" class="mic-bar" aria-label="Hold to dictate">
+        <span class="mic-icon">🎙️</span>
+        <span class="mic-label">Hold to talk</span>
+        <span class="mic-wave"><i></i><i></i><i></i><i></i><i></i></span>
+      </button>
+      <div class="sheet-actions">
+        <button class="cancel" id="compose-cancel">Cancel</button>
+        <button class="primary" id="compose-send">Send</button>
+      </div>
+    </div>
+  </div>
+
   <div id="summary-sheet" class="sheet" hidden>
     <div class="sheet-inner summary-inner">
       <h3 id="summary-title">Summary</h3>
@@ -93,7 +109,7 @@
 
 
 </div>
-<script src="/app.js?v=21" type="module"></script>
+<script src="/app.js?v=22" type="module"></script>
 <script>
 // Nuke any old caches on every load + forcibly update the service worker
 (async () => {

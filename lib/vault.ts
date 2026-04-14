@@ -11,6 +11,7 @@ export interface VaultSummary {
   service?: string;
   challenges?: string;
   contactId?: string;
+  phone?: string;
 }
 
 function walk(dir: string): string[] {
@@ -41,6 +42,7 @@ function parseFile(path: string): VaultSummary | null {
 
   const idMatch = text.match(/GHL Contact ID\s*\|\s*(\w+)/);
   const challengesMatch = text.match(/Challenges\s*\|\s*(.+?)\s*\|/);
+  const phoneMatch = text.match(/\|\s*Phone\s*\|\s*(\+?\d[\d\s\-().]+)\s*\|/);
 
   return {
     name: fm.client || path.split("/").pop()!.replace(".md", ""),
@@ -50,6 +52,7 @@ function parseFile(path: string): VaultSummary | null {
     service: fm.service || undefined,
     challenges: challengesMatch && challengesMatch[1] !== "—" ? challengesMatch[1].trim() : undefined,
     contactId: idMatch ? idMatch[1] : undefined,
+    phone: phoneMatch ? phoneMatch[1].trim() : undefined,
   };
 }
 
