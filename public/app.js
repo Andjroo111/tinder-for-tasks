@@ -470,7 +470,6 @@ function openEdit(card, prefill) {
 
   $("#edit-cancel").onclick = () => {
     sheet.hidden = true;
-    releaseStream();
     const topEl = stackEl.querySelector(".card");
     if (topEl) topEl.style.transform = "";
   };
@@ -480,7 +479,6 @@ function openEdit(card, prefill) {
     const edited = textEl.value.trim();
     if (!edited) return;
     sheet.hidden = true;
-    releaseStream();
     stamp(card, "green");
     const res = await api(`/api/cards/${card.cardId}/edit`, {
       method: "POST",
