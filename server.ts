@@ -349,7 +349,7 @@ app.post("/api/send", async (c) => {
         `https://services.leadconnectorhq.com/contacts/${body.contactId}`,
         {
           headers: {
-            Authorization: "Bearer REDACTED_GHL_PIT",
+            Authorization: "Bearer pit-5f68873a-376a-451b-8713-83a6f43f0ec9",
             Version: "2021-07-28",
             Accept: "application/json",
           },
