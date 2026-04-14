@@ -494,33 +494,72 @@ const ACT_ICON = { sent: "✓", edited: "✎", thumbs_up: "👍", skipped: "↩"
 const ACT_VERB = { sent: "Sent to", edited: "Sent edited to", thumbs_up: "👍 to", skipped: "Skipped", snoozed: "Snoozed" };
 
 async function loadDashboard() {
-  const data = await api("/api/activity");
+  const data = await api("/api/activity?limit=200");
   const entries = (data.entries || []);
   const todayStr = new Date().toDateString();
   const todayEntries = entries.filter((e) => new Date(e.at).toDateString() === todayStr);
   const list = $("#activity-list");
   const summary = $("#today-summary");
 
-  if (todayEntries.length === 0) {
+  if (entries.length === 0) {
     summary.textContent = "Nothing handled yet today";
     list.innerHTML = "";
     return;
   }
   summary.textContent = `${todayEntries.length} handled today`;
-  const recent = entries.slice(0, 8);
-  list.innerHTML = `<div class="act-section-label">Recent activity</div>` +
-    recent.map((e) => `
-      <div class="act-item">
-        <div class="act-icon ${e.action}">${ACT_ICON[e.action] || "·"}</div>
-        <div class="act-body">
-          <div class="act-head">
-            <span class="act-name">${ACT_VERB[e.action] || e.action} ${escape(e.contactName)}</span>
-            <span class="act-time">${formatAge(e.at)}</span>
+
+  // Group by contact (contactId falls back to contactName)
+  const groups = new Map();
+  for (const e of entries) {
+    const key = e.contactId || e.contactName;
+    if (!groups.has(key)) groups.set(key, { name: e.contactName, items: [] });
+    groups.get(key).items.push(e);
+  }
+  // Sort groups by latest action
+  const ordered = [...groups.values()].sort(
+    (a, b) => new Date(b.items[0].at) - new Date(a.items[0].at)
+  );
+
+  list.innerHTML = `<div class="act-section-label">Recent activity · ${ordered.length} people</div>` +
+    ordered.map((g, gi) => {
+      const latest = g.items[0];
+      const open = gi === 0 ? " open" : "";
+      return `
+        <div class="act-group${open}" data-group="${gi}">
+          <button class="act-group-head" data-toggle="${gi}">
+            <div class="act-icon ${latest.action}">${ACT_ICON[latest.action] || "·"}</div>
+            <div class="act-body">
+              <div class="act-head">
+                <span class="act-name">${escape(g.name)}</span>
+                <span class="act-time">${formatAge(latest.at)}</span>
+              </div>
+              <div class="act-sub">${ACT_VERB[latest.action] || latest.action} · ${g.items.length} action${g.items.length === 1 ? "" : "s"}</div>
+            </div>
+            <span class="act-chev">›</span>
+          </button>
+          <div class="act-group-body">
+            ${g.items.map((e) => `
+              <div class="act-item">
+                <div class="act-icon ${e.action}">${ACT_ICON[e.action] || "·"}</div>
+                <div class="act-body">
+                  <div class="act-head">
+                    <span class="act-name">${ACT_VERB[e.action] || e.action}</span>
+                    <span class="act-time">${formatAge(e.at)}</span>
+                  </div>
+                  ${e.preview ? `<div class="act-preview">${escape(e.preview)}</div>` : ""}
+                </div>
+              </div>
+            `).join("")}
           </div>
-          ${e.preview ? `<div class="act-preview">${escape(e.preview)}</div>` : ""}
         </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
+
+  list.querySelectorAll(".act-group-head").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btn.parentElement.classList.toggle("open");
+    });
+  });
 }
 
 let mediaRecorder = null;
@@ -670,12 +709,49 @@ $("#mode-toggle").addEventListener("click", async () => {
   loadMode();
 });
 
-$("#refresh-btn").addEventListener("click", async (e) => {
-  const btn = e.currentTarget;
-  btn.classList.add("spinning");
-  try { await load(); await loadDashboard(); }
-  finally { setTimeout(() => btn.classList.remove("spinning"), 400); }
-});
+// Pull-to-refresh
+(() => {
+  const ptr = document.getElementById("ptr-indicator");
+  if (!ptr) return;
+  let startY = 0, pulling = false, pullDist = 0;
+  const THRESHOLD = 70;
+
+  const onStart = (e) => {
+    if (window.scrollY > 0) return;
+    if (e.target.closest(".card") || e.target.closest(".sheet") || e.target.closest(".act-group")) return;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    pulling = true;
+    pullDist = 0;
+  };
+  const onMove = (e) => {
+    if (!pulling) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    pullDist = Math.max(0, y - startY);
+    if (pullDist > 5) {
+      const pct = Math.min(1, pullDist / THRESHOLD);
+      ptr.style.transform = `translateY(${Math.min(pullDist, THRESHOLD + 20)}px)`;
+      ptr.style.opacity = pct;
+      ptr.classList.toggle("ready", pullDist >= THRESHOLD);
+    }
+  };
+  const onEnd = async () => {
+    if (!pulling) return;
+    pulling = false;
+    if (pullDist >= THRESHOLD) {
+      ptr.classList.add("loading");
+      ptr.querySelector(".ptr-label").textContent = "Refreshing";
+      try { await load(); await loadDashboard(); } catch {}
+      ptr.classList.remove("loading", "ready");
+    }
+    ptr.style.transform = "";
+    ptr.style.opacity = "";
+    ptr.querySelector(".ptr-label").textContent = "Pull to refresh";
+    pullDist = 0;
+  };
+  document.addEventListener("touchstart", onStart, { passive: true });
+  document.addEventListener("touchmove", onMove, { passive: true });
+  document.addEventListener("touchend", onEnd);
+})();
 $("#next-btn").addEventListener("click", () => {
   if (cards.length < 2) return;
   // Rotate: move top card to the back locally so you can peek ahead without acting
@@ -684,20 +760,13 @@ $("#next-btn").addEventListener("click", () => {
   render();
 });
 
-const STAMPS = {
-  green:  ["SENT 🚀", "BOOM!", "YEET", "SHIPPED", "DELIVERED", "NAILED IT", "LET'S GO"],
-  red:    ["NOPE", "PASS", "SKIPPED", "BYE 👋", "HARD PASS", "NEXT", "NAH"],
-  orange: ["ZZZ 😴", "LATER", "SNOOZED", "CATCH YA", "TALK SOON", "ON ICE"],
-  blue:   ["👍", "THUMBS UP", "ACK'D", "ROGER", "COPY THAT", "NICE"],
-};
+const STAMPS = { green: "SENT", red: "SKIP", orange: "SNOOZED", blue: "THUMBS UP" };
 function stamp(card, tone) {
-  const list = STAMPS[tone] || STAMPS.green;
-  const msg = list[Math.floor(Math.random() * list.length)];
   const cardEl = document.querySelector(`.card[data-card-id="${card.cardId}"]`);
   if (!cardEl) return;
   const el = document.createElement("div");
   el.className = `stamp ${tone}`;
-  el.textContent = msg;
+  el.textContent = STAMPS[tone] || "DONE";
   cardEl.appendChild(el);
 }
 function toast() {} // legacy no-op
