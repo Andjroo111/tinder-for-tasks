@@ -50,7 +50,7 @@ function parseFile(path: string): VaultSummary | null {
   else if (folder === "Alumni") bucket = "alumni";
   else if (folder === "Dead-Leads") bucket = "dead";
 
-  // Build synopsis: challenges + consultation transcript excerpt + latest session/homework
+  // Synopsis: challenges + consultation summary only. No comm log / SMS noise.
   const pieces: string[] = [];
   if (challengesMatch && challengesMatch[1] !== "—") {
     pieces.push(challengesMatch[1].trim());
@@ -61,22 +61,11 @@ function parseFile(path: string): VaultSummary | null {
       .replace(/^>\s*\[!note\].*$/gm, "")
       .replace(/^#+\s.*$/gm, "")
       .replace(/\*\*/g, "")
+      .replace(/^\s*-\s*\*\*\d{4}-\d{2}-\d{2}.*$/gm, "")
       .trim();
     if (consult && !/no transcript/i.test(consult)) {
       pieces.push(consult.slice(0, 600));
     }
-  }
-  const sessionsMatch = text.match(/## Sessions?\s*\n([\s\S]*?)(?=\n## |\n---|\n$)/);
-  if (sessionsMatch) {
-    const sessions = sessionsMatch[1].trim();
-    if (sessions && !/no session/i.test(sessions)) {
-      pieces.push("Sessions: " + sessions.slice(0, 300));
-    }
-  }
-  const commLogMatch = text.match(/## Communication Log\s*\n([\s\S]*?)(?=\n## |\n---|\n$)/);
-  if (commLogMatch) {
-    const lines = commLogMatch[1].trim().split("\n").slice(-3).join("\n");
-    if (lines) pieces.push("Recent: " + lines.slice(0, 300));
   }
 
   return {
