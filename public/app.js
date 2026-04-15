@@ -122,7 +122,7 @@ function buildCard(card) {
     : `
       <div class="actions">
         <button class="act skip" data-action="skip">← Skip</button>
-        <button class="act snooze" data-action="snooze">↓ Snooze</button>
+        <button class="act snooze" data-action="back">↓ Later</button>
         <button class="act send" data-action="approve">Send →</button>
       </div>
     `;
@@ -242,7 +242,7 @@ function attachGestures(el, card) {
       const action = btn.dataset.action;
       if (action === "approve") approve(card);
       else if (action === "skip") skip(card);
-      else if (action === "snooze") openSnooze(card);
+      else if (action === "back" || action === "snooze") sendToBack(card);
       else if (action === "schedule-approve") scheduleApprove(card);
       else if (action === "schedule-reject") scheduleReject(card);
     });
@@ -318,7 +318,7 @@ function attachGestures(el, card) {
       setTimeout(() => (isOverride ? scheduleReject(card) : skip(card)), 250);
     } else if (dy > threshold) {
       el.classList.add("out-down");
-      setTimeout(() => (isOverride ? scheduleReject(card) : openSnooze(card)), 250);
+      setTimeout(() => (isOverride ? scheduleReject(card) : sendToBack(card)), 250);
     } else if (dy < -threshold) {
       el.classList.add("out-up");
       setTimeout(() => (isOverride ? scheduleApprove(card) : thumbsUp(card)), 250);
@@ -353,6 +353,15 @@ async function approve(card) {
   } finally {
     setTimeout(() => _approveInFlight.delete(card.cardId), 2000);
   }
+}
+
+function sendToBack(card) {
+  if (cards.length < 2) { render(); return; }
+  const i = cards.findIndex((c) => c.cardId === card.cardId);
+  if (i < 0) { render(); return; }
+  const [moved] = cards.splice(i, 1);
+  cards.push(moved);
+  render();
 }
 
 async function skip(card) {
