@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Tasks">
 <link rel="manifest" href="/manifest.json">
 <title>Tinder for Tasks</title>
-<link rel="stylesheet" href="/style.css?v=30">
+<link rel="stylesheet" href="/style.css?v=31">
 </head>
 <body>
 <div id="app">
@@ -33,6 +33,25 @@
       <h2>All Caught Up</h2>
       <p class="dash-sub" id="today-summary">Nothing to review right now</p>
       <div id="activity-list"></div>
+    </div>
+  </div>
+
+  <div id="proposal-sheet" class="sheet" hidden>
+    <div class="sheet-inner edit-inner">
+      <h3 id="proposal-title">Send proposal (3 texts)</h3>
+      <div class="prop-label">Text 1 — Consultation recap</div>
+      <textarea id="prop-text-1" rows="4" placeholder="Hey [First]! Thanks for hopping on the call about [Dog] today. ..."></textarea>
+      <div class="char-count" data-target="prop-text-1"></div>
+      <div class="prop-label">Text 2 — Pricing & recommendation</div>
+      <textarea id="prop-text-2" rows="6"></textarea>
+      <div class="char-count" data-target="prop-text-2"></div>
+      <div class="prop-label">Text 3 — Instagram</div>
+      <textarea id="prop-text-3" rows="2"></textarea>
+      <div class="char-count" data-target="prop-text-3"></div>
+      <div class="sheet-actions">
+        <button class="cancel" id="prop-cancel">Cancel</button>
+        <button class="primary" id="prop-send">Send all 3</button>
+      </div>
     </div>
   </div>
 
@@ -92,7 +111,7 @@
 
 
 </div>
-<script src="/app.js?v=30" type="module"></script>
+<script src="/app.js?v=31" type="module"></script>
 <script>
 // Nuke any old caches on every load + forcibly update the service worker
 (async () => {

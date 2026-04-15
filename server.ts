@@ -290,6 +290,63 @@ app.get("/api/contacts/:contactId/summary", async (c) => {
   return c.json(s);
 });
 
+app.post("/api/send-multi", async (c) => {
+  const body = (await c.req.json()) as {
+    contactId: string;
+    contactName: string;
+    dogName?: string;
+    phone?: string;
+    messages: string[];
+    delayMs?: number;
+  };
+  if (!body.messages?.length || !body.contactId || !body.contactName) {
+    return c.json({ error: "missing required fields" }, 400);
+  }
+  let phone = body.phone;
+  if (!phone) {
+    const { getSummary } = await import("./lib/vault");
+    const s = getSummary(body.contactId, body.contactName);
+    phone = s?.phone;
+  }
+  if (!phone) {
+    try {
+      const r = await fetch(
+        `https://services.leadconnectorhq.com/contacts/${body.contactId}`,
+        { headers: { Authorization: `Bearer ${process.env.GHL_BEARER_TOKEN}`, Version: "2021-07-28", Accept: "application/json" } }
+      );
+      if (r.ok) {
+        const data = (await r.json()) as { contact?: { phone?: string } };
+        phone = data.contact?.phone || undefined;
+      }
+    } catch {}
+  }
+  if (!phone) return c.json({ error: "no phone on file for contact" }, 404);
+
+  const delay = Math.max(500, Math.min(body.delayMs ?? 2500, 10000));
+  const results: { ok: boolean; error?: string }[] = [];
+  for (let i = 0; i < body.messages.length; i++) {
+    const msg = body.messages[i].trim();
+    if (!msg) { results.push({ ok: false, error: "empty" }); continue; }
+    try {
+      await sendSMS(phone, msg, body.contactId);
+      await logActivity({
+        action: "sent",
+        contactName: body.contactName,
+        contactId: body.contactId,
+        dogName: body.dogName,
+        phone,
+        preview: `[${i + 1}/${body.messages.length}] ${msg.slice(0, 80)}`,
+        at: new Date().toISOString(),
+      });
+      results.push({ ok: true });
+    } catch (err) {
+      results.push({ ok: false, error: String(err) });
+    }
+    if (i < body.messages.length - 1) await new Promise((r) => setTimeout(r, delay));
+  }
+  return c.json({ sent: results.filter((r) => r.ok).length, total: body.messages.length, results });
+});
+
 app.post("/api/send", async (c) => {
   const body = (await c.req.json()) as {
     contactId: string;

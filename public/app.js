@@ -476,6 +476,9 @@ async function loadDashboard() {
             <button class="act-send-btn" data-contact-id="${latest.contactId}" data-contact-name="${escape(g.name)}" data-dog-name="${escape(latest.dogName || "")}" data-phone="${escape(latest.phone || "")}">
               <span>📨</span> Send follow-up
             </button>
+            <button class="act-prop-btn" data-contact-id="${latest.contactId}" data-contact-name="${escape(g.name)}" data-dog-name="${escape(latest.dogName || "")}" data-phone="${escape(latest.phone || "")}">
+              <span>💸</span> Send proposal (3 texts)
+            </button>
             ${g.items.map((e) => `
               <div class="act-item">
                 <div class="act-icon ${e.action}">${ACT_ICON[e.action] || "·"}</div>
@@ -687,6 +690,73 @@ document.addEventListener("click", (e) => {
   if (!btn) return;
   e.stopPropagation();
   openCompose({
+    contactId: btn.dataset.contactId,
+    contactName: btn.dataset.contactName,
+    dogName: btn.dataset.dogName || undefined,
+    phone: btn.dataset.phone || undefined,
+  });
+});
+
+// Send proposal (3-text) sheet
+const INSTAGRAM_TEXT = "Here is our Instagram too — I post pretty much every day about what I am doing with dogs: instagram.com/good.dogz.kc";
+function pricingTemplate(dogName) {
+  const dog = dogName ? ` for ${dogName}` : "";
+  return `Here's how the in-home packages break down:
+
+- 4 sessions — $600
+- 6 sessions — $800 (recommended)
+- 8 sessions — $1,000
+
+Sessions are about an hour each week at your place with some light homework built into your daily routine (5-10 min, a couple times a week). The 6-session package is what I'd recommend${dog} — gives us enough time to build the skills and then spread sessions out for long-term troubleshooting. Let me know if you have any questions! 😊`;
+}
+let propCtx = null;
+function openProposal({ contactId, contactName, dogName, phone }) {
+  propCtx = { contactId, contactName, dogName, phone };
+  $("#proposal-title").textContent = `Proposal · ${contactName}${dogName ? ` · ${dogName}` : ""}`;
+  const first = (contactName || "").split(" ")[0] || "";
+  $("#prop-text-1").value = `Hey ${first}! Thanks for hopping on the call about ${dogName || "[Dog]"} today. `;
+  $("#prop-text-2").value = pricingTemplate(dogName);
+  $("#prop-text-3").value = INSTAGRAM_TEXT;
+  $("#proposal-sheet").hidden = false;
+  setTimeout(() => $("#prop-text-1").focus(), 100);
+}
+$("#prop-cancel").addEventListener("click", () => {
+  $("#proposal-sheet").hidden = true; propCtx = null;
+});
+$("#prop-send").addEventListener("click", async () => {
+  if (!propCtx) return;
+  const messages = [
+    $("#prop-text-1").value.trim(),
+    $("#prop-text-2").value.trim(),
+    $("#prop-text-3").value.trim(),
+  ];
+  if (messages.some((m) => !m)) { alert("All 3 texts must have content"); return; }
+  if (!confirm(`Send 3 texts to ${propCtx.contactName}? They'll arrive ~2.5s apart.`)) return;
+  const btn = $("#prop-send");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    const res = await api("/api/send-multi", {
+      method: "POST",
+      body: JSON.stringify({ ...propCtx, messages, delayMs: 2500 }),
+    });
+    if (res.error) { alert(res.error); btn.disabled = false; btn.textContent = "Send all 3"; return; }
+    if (res.sent !== res.total) {
+      alert(`Sent ${res.sent} of ${res.total}. Check the activity feed.`);
+    }
+    $("#proposal-sheet").hidden = true; propCtx = null;
+    await loadDashboard();
+  } catch (e) {
+    alert("Failed: " + e);
+  } finally {
+    btn.disabled = false; btn.textContent = "Send all 3";
+  }
+});
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".act-prop-btn");
+  if (!btn) return;
+  e.stopPropagation();
+  openProposal({
     contactId: btn.dataset.contactId,
     contactName: btn.dataset.contactName,
     dogName: btn.dataset.dogName || undefined,
