@@ -753,6 +753,37 @@ document.addEventListener("click", (e) => {
   openSummary(btn.dataset.contactId, btn.dataset.contactName);
 }, true);
 
+// Live character + SMS count for textareas
+function updateCharCount(textarea) {
+  const wrap = document.querySelector(`.char-count[data-target="${textarea.id}"]`);
+  if (!wrap) return;
+  const len = textarea.value.length;
+  // GSM-7 = 160 per segment, unicode = 70. Heuristic: if any non-ASCII, treat as unicode.
+  const unicode = /[^\x00-\x7F]/.test(textarea.value);
+  const seg = unicode ? 70 : 160;
+  const segments = len === 0 ? 0 : Math.ceil(len / seg);
+  wrap.classList.remove("warn", "bad");
+  if (segments >= 3) wrap.classList.add("bad");
+  else if (segments === 2) wrap.classList.add("warn");
+  const segLabel = segments <= 1
+    ? `${len}/${seg}`
+    : `${len} chars · ${segments} SMS${segments >= 3 ? " — likely splits out of order" : ""}`;
+  wrap.innerHTML = `<span class="pill">${segLabel}</span>`;
+}
+document.querySelectorAll(".char-count").forEach((el) => {
+  const ta = document.getElementById(el.dataset.target);
+  if (!ta) return;
+  ta.addEventListener("input", () => updateCharCount(ta));
+  // Also update when value is set programmatically (mic transcribe, prefill)
+  const _setVal = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
+  Object.defineProperty(ta, "value", {
+    set(v) { _setVal.call(this, v); updateCharCount(ta); },
+    get() { return Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").get.call(this); },
+    configurable: true,
+  });
+  updateCharCount(ta);
+});
+
 // Pull-to-refresh
 (() => {
   const ptr = document.getElementById("ptr-indicator");

@@ -630,6 +630,20 @@ body::before {
 }
 .act-send-btn:active { transform: scale(0.98); }
 
+.char-count {
+  font-family: var(--font-heading);
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin: -4px 4px 6px;
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+.char-count .pill {
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(7,237,190,0.12); color: var(--teal);
+  border: 1px solid rgba(7,237,190,0.35);
+}
+.char-count.warn .pill { background: rgba(255,184,77,0.18); color: var(--warn); border-color: rgba(255,184,77,0.45); }
+.char-count.bad .pill { background: rgba(255,126,192,0.18); color: var(--pink); border-color: rgba(255,126,192,0.45); }
+
 /* Card info (i) button */
 .card-info-btn {
   margin-left: 8px;
