@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Tasks">
 <link rel="manifest" href="/manifest.json">
 <title>Tinder for Tasks</title>
-<link rel="stylesheet" href="/style.css?v=28">
+<link rel="stylesheet" href="/style.css?v=29">
 </head>
 <body>
 <div id="app">
@@ -33,25 +33,6 @@
       <h2>All Caught Up</h2>
       <p class="dash-sub" id="today-summary">Nothing to review right now</p>
       <div id="activity-list"></div>
-    </div>
-  </div>
-
-  <div id="snooze-sheet" class="sheet" hidden>
-    <div class="sheet-inner">
-      <h3>Remind me…</h3>
-      <button data-snooze="later" id="snooze-later">In a bit</button>
-      <button data-snooze="afternoon" id="snooze-afternoon">This afternoon</button>
-      <button data-snooze="evening" id="snooze-evening">This evening</button>
-      <button data-snooze="tomorrow" id="snooze-tomorrow">Tomorrow morning</button>
-      <div class="custom-snooze-slider">
-        <div class="slider-head">
-          <span class="slider-label">Custom</span>
-          <span class="slider-value"><span id="snooze-custom-val">4</span> hrs</span>
-        </div>
-        <input id="snooze-custom-hours" type="range" min="1" max="72" step="1" value="4">
-        <button data-snooze="custom" class="primary">Snooze</button>
-      </div>
-      <button class="cancel" data-snooze="cancel">Cancel</button>
     </div>
   </div>
 
@@ -109,7 +90,7 @@
 
 
 </div>
-<script src="/app.js?v=28" type="module"></script>
+<script src="/app.js?v=29" type="module"></script>
 <script>
 // Nuke any old caches on every load + forcibly update the service worker
 (async () => {

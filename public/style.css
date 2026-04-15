@@ -403,63 +403,6 @@ body::before {
   box-shadow: 0 0 24px rgba(7,237,190,0.35);
 }
 .sheet-inner button[hidden] { display: none !important; }
-.snooze-time {
-  float: right; color: var(--muted); font-weight: 400;
-  font-size: 13px; padding-right: 4px;
-}
-.custom-snooze-slider {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px 16px 14px;
-  display: flex; flex-direction: column; gap: 16px;
-}
-.custom-snooze-slider #snooze-custom-hours { margin: 8px 0 4px; }
-.slider-head { display: flex; justify-content: space-between; align-items: center; }
-.slider-label { font-size: 14px; font-weight: 500; }
-.slider-value { color: var(--accent); font-weight: 600; font-size: 15px; }
-#snooze-custom-hours[type="range"] {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; height: 6px;
-  background: linear-gradient(to right, #22c55e 0%, #f97316 100%);
-  border-radius: 3px;
-  padding: 0 !important; margin: 8px 0 4px; outline: none;
-}
-#snooze-custom-hours[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: var(--accent); border: 2px solid var(--surface);
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-.custom-snooze-slider button {
-  padding: 12px !important; border-radius: 10px !important;
-  font-size: 14px !important; font-weight: 600 !important;
-  margin: 0 !important; min-height: 0 !important;
-}
-.custom-snooze {
-  display: flex !important; flex-direction: row !important;
-  gap: 8px; align-items: stretch; width: 100%;
-}
-.custom-snooze input {
-  flex: 1 1 auto; min-width: 0;
-  background: var(--surface-2) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text); font-family: inherit; font-size: 15px;
-  padding: 14px !important; margin: 0;
-  border-radius: 12px !important;
-  -webkit-appearance: none; appearance: none;
-  -webkit-user-select: text !important; user-select: text !important;
-}
-.custom-snooze input::placeholder { color: var(--muted); }
-.custom-snooze input:focus { outline: none; border-color: var(--accent) !important; }
-.custom-snooze .unit { display: none; }
-.custom-snooze button {
-  padding: 14px 20px !important;
-  border-radius: 12px !important;
-  font-size: 15px !important; font-weight: 600 !important;
-  flex-shrink: 0; margin: 0 !important;
-}
 
 .edit-inner textarea {
   width: 100%; background: var(--surface-2);

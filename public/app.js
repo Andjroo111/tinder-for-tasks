@@ -242,7 +242,7 @@ function attachGestures(el, card) {
       const action = btn.dataset.action;
       if (action === "approve") approve(card);
       else if (action === "skip") skip(card);
-      else if (action === "back" || action === "snooze") sendToBack(card);
+      else if (action === "back") sendToBack(card);
       else if (action === "schedule-approve") scheduleApprove(card);
       else if (action === "schedule-reject") scheduleReject(card);
     });
@@ -389,86 +389,6 @@ async function scheduleReject(card) {
   const res = await api(`/api/cards/${card.cardId}/schedule-reject`, { method: "POST" });
   if (res.rejected) setTimeout(load, 300);
   else { alert(res.error || "Failed to reject override"); load(); }
-}
-
-function previewSnoozeTime(hour) {
-  const d = new Date();
-  d.setHours(hour, 0, 0, 0);
-  if (d.getTime() <= Date.now() + 15 * 60000) d.setDate(d.getDate() + 1);
-  const sameDay = d.toDateString() === new Date().toDateString();
-  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }).replace(":00 ", " ");
-  return sameDay ? time : `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
-}
-
-function updateSnoozeLabels() {
-  const now = new Date();
-  const laterTime = new Date(now.getTime() + 90 * 60000);
-  const laterLabel = laterTime.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }).replace(":00 ", " ");
-  const setLabel = (id, prefix, time) => {
-    const el = $(id);
-    if (el) el.innerHTML = `${prefix}<span class="snooze-time">${time}</span>`;
-  };
-  setLabel("#snooze-later", "In a bit", laterLabel);
-  const hour = now.getHours();
-  $("#snooze-afternoon").hidden = hour >= 14;
-  $("#snooze-evening").hidden = hour >= 18;
-  if (!$("#snooze-afternoon").hidden) setLabel("#snooze-afternoon", "This afternoon", previewSnoozeTime(14));
-  if (!$("#snooze-evening").hidden) setLabel("#snooze-evening", "This evening", previewSnoozeTime(18));
-  setLabel("#snooze-tomorrow", "Tomorrow morning", previewSnoozeTime(8));
-}
-
-function lerpColor(t) {
-  const g = [34, 197, 94];
-  const o = [249, 115, 22];
-  const r = Math.round(g[0] + (o[0] - g[0]) * t);
-  const gg = Math.round(g[1] + (o[1] - g[1]) * t);
-  const b = Math.round(g[2] + (o[2] - g[2]) * t);
-  return `rgb(${r}, ${gg}, ${b})`;
-}
-
-function openSnooze(card) {
-  const sheet = $("#snooze-sheet");
-  updateSnoozeLabels();
-  const slider = $("#snooze-custom-hours");
-  const valEl = $("#snooze-custom-val");
-  const submitBtn = sheet.querySelector('[data-snooze="custom"]');
-  const updateUi = () => {
-    const v = parseInt(slider.value, 10);
-    valEl.textContent = v;
-    const t = (v - 1) / (72 - 1);
-    const color = lerpColor(t);
-    // Button gets gradient from green→current position color
-    submitBtn.style.background = `linear-gradient(to right, #22c55e 0%, ${color} 100%)`;
-    submitBtn.style.borderColor = color;
-    valEl.style.color = color;
-  };
-  updateUi();
-  slider.oninput = updateUi;
-  sheet.hidden = false;
-  sheet.onclick = async (e) => {
-    const btn = e.target.closest("[data-snooze]");
-    if (!btn) return;
-    const action = btn.dataset.snooze;
-    if (action === "cancel") {
-      sheet.hidden = true;
-      const topEl = stackEl.querySelector(".card");
-      if (topEl) topEl.style.transform = "";
-      return;
-    }
-    const payload = { duration: action };
-    if (action === "custom") {
-      const hours = parseInt($("#snooze-custom-hours").value, 10);
-      if (!hours || hours < 1) { toast("Enter hours 1-168"); return; }
-      payload.hours = hours;
-    }
-    sheet.hidden = true;
-    stamp(card, "orange");
-    await api(`/api/cards/${card.cardId}/snooze`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    setTimeout(load, 300);
-  };
 }
 
 function openEdit(card, prefill) {
