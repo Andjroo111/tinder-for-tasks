@@ -200,8 +200,23 @@ app.post("/api/cards/:id/approve", async (c) => {
   // Mark sent FIRST to prevent double-send on rapid repeat calls
   await updateStatus(card.cardId, "sent");
   try {
-    await sendSMS(card.phone, card.draftResponse, card.contactId);
-    await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, phone: card.phone, preview: card.draftResponse.slice(0, 100), at: new Date().toISOString() });
+    // Split multi-text drafts on `━━━ TEXT N/M (label) ━━━` markers.
+    // Used for post-consultation 3-text follow-ups that would otherwise
+    // exceed GHL's single-SMS length limit.
+    const chunks = card.draftResponse
+      .split(/━━━[^━\n]*━━━\n?/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (chunks.length > 1) {
+      for (let i = 0; i < chunks.length; i++) {
+        await sendSMS(card.phone, chunks[i], card.contactId);
+        if (i < chunks.length - 1) await new Promise((r) => setTimeout(r, 2000));
+      }
+      await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, phone: card.phone, preview: `[${chunks.length}-part] ${chunks[0].slice(0, 80)}`, at: new Date().toISOString() });
+    } else {
+      await sendSMS(card.phone, card.draftResponse, card.contactId);
+      await logActivity({ action: "sent", contactName: card.contactName, contactId: card.contactId, dogName: card.dogName, phone: card.phone, preview: card.draftResponse.slice(0, 100), at: new Date().toISOString() });
+    }
     return c.json({ sent: true });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
