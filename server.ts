@@ -290,6 +290,61 @@ app.get("/api/contacts/:contactId/summary", async (c) => {
   return c.json(s);
 });
 
+app.get("/api/contacts/:contactId/recap", async (c) => {
+  const { getConsultationTranscript } = await import("./lib/vault");
+  const contactId = c.req.param("contactId");
+  const name = c.req.query("name") || "";
+  const dog = c.req.query("dog") || "";
+  if (!name) return c.json({ error: "name required" }, 400);
+
+  const found = getConsultationTranscript(name);
+  if (!found) return c.json({ error: "no transcript on file", recap: "" }, 404);
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return c.json({ error: "ANTHROPIC_API_KEY not set", transcriptPath: found.path }, 500);
+
+  const firstName = name.split(" ")[0] || name;
+  const dogTag = dog ? dog : "[dog]";
+  const transcript = found.text.slice(0, 12000); // cap for cost
+
+  const prompt = `You are drafting Text 1 of a 3-text proposal follow-up for Andrew (Good Dogz KC dog trainer). The format is FIXED:
+
+"Hey ${firstName}! Thanks for hopping on the call about ${dogTag} today. [2-3 sentences synthesizing the key issues discussed and the training approach]"
+
+Rules:
+- Pull from the actual transcript, not generic language
+- Reference specific behaviors and Andrew's assessment from the call
+- Use Andrew's casual, warm voice — never corporate
+- 2-3 sentences max after the greeting
+- No pricing, no package details, no Instagram (those are in Texts 2 and 3)
+- Output ONLY the text message body, nothing else (no markdown, no quotes, no preamble)
+
+CONSULTATION TRANSCRIPT:
+${transcript}`;
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 400,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    const data = (await r.json()) as { content?: { text?: string }[]; error?: { message?: string } };
+    if (!r.ok || data.error) return c.json({ error: data.error?.message || `HTTP ${r.status}` }, 502);
+    const text = (data.content?.[0]?.text || "").trim();
+    return c.json({ recap: text, transcriptPath: found.path });
+  } catch (err) {
+    return c.json({ error: String(err) }, 502);
+  }
+});
+
 app.post("/api/send-multi", async (c) => {
   const body = (await c.req.json()) as {
     contactId: string;

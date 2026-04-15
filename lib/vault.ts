@@ -2,6 +2,46 @@ import { readdirSync, readFileSync, statSync } from "fs";
 import { join } from "path";
 
 const VAULT_ROOT = process.env.GDKC_VAULT_PATH || "/Users/andjroo/gdkc/GDKC-Vault/Clients";
+const TRANSCRIPT_ROOT = process.env.GDKC_TRANSCRIPT_PATH || "/Users/andjroo/gdkc/data/Consultation-Transcripts";
+
+function tokenize(name: string): string[] {
+  return name.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((t) => t.length >= 3);
+}
+
+function findTranscriptFor(contactName: string): string | null {
+  const tokens = tokenize(contactName);
+  if (!tokens.length) return null;
+  const candidates: { path: string; score: number }[] = [];
+  const walk = (dir: string) => {
+    try {
+      for (const entry of readdirSync(dir)) {
+        const p = join(dir, entry);
+        const st = statSync(p);
+        if (st.isDirectory()) walk(p);
+        else if (entry.toLowerCase().endsWith(".md")) {
+          const lower = entry.toLowerCase();
+          let score = 0;
+          for (const t of tokens) if (lower.includes(t)) score++;
+          if (score > 0) candidates.push({ path: p, score });
+        }
+      }
+    } catch {}
+  };
+  walk(TRANSCRIPT_ROOT);
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.score - a.score || b.path.localeCompare(a.path));
+  return candidates[0].path;
+}
+
+export function getConsultationTranscript(contactName: string): { path: string; text: string } | null {
+  const path = findTranscriptFor(contactName);
+  if (!path) return null;
+  try {
+    return { path, text: readFileSync(path, "utf8") };
+  } catch {
+    return null;
+  }
+}
 
 export interface VaultSummary {
   name: string;

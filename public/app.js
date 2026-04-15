@@ -710,15 +710,35 @@ function pricingTemplate(dogName) {
 Sessions are about an hour each week at your place with some light homework built into your daily routine (5-10 min, a couple times a week). The 6-session package is what I'd recommend${dog} — gives us enough time to build the skills and then spread sessions out for long-term troubleshooting. Let me know if you have any questions! 😊`;
 }
 let propCtx = null;
-function openProposal({ contactId, contactName, dogName, phone }) {
+async function openProposal({ contactId, contactName, dogName, phone }) {
   propCtx = { contactId, contactName, dogName, phone };
   $("#proposal-title").textContent = `Proposal · ${contactName}${dogName ? ` · ${dogName}` : ""}`;
   const first = (contactName || "").split(" ")[0] || "";
-  $("#prop-text-1").value = `Hey ${first}! Thanks for hopping on the call about ${dogName || "[Dog]"} today. `;
+  $("#prop-text-1").value = "⏳ Generating recap from consultation transcript…";
+  $("#prop-text-1").disabled = true;
   $("#prop-text-2").value = pricingTemplate(dogName);
   $("#prop-text-3").value = INSTAGRAM_TEXT;
   $("#proposal-sheet").hidden = false;
-  setTimeout(() => $("#prop-text-1").focus(), 100);
+  // Fetch consultation recap in background
+  try {
+    const params = new URLSearchParams({ name: contactName, dog: dogName || "" });
+    const res = await fetch(`/api/contacts/${contactId}/recap?${params}`, { credentials: "same-origin" });
+    const data = await res.json();
+    if (res.ok && data.recap) {
+      $("#prop-text-1").value = data.recap;
+    } else {
+      $("#prop-text-1").value = `Hey ${first}! Thanks for hopping on the call about ${dogName || "[Dog]"} today. `;
+      const note = data.error === "no transcript on file"
+        ? "(no transcript found — type recap manually)"
+        : `(recap auto-fill failed: ${data.error || "unknown"})`;
+      console.warn(note);
+    }
+  } catch (e) {
+    $("#prop-text-1").value = `Hey ${first}! Thanks for hopping on the call about ${dogName || "[Dog]"} today. `;
+  } finally {
+    $("#prop-text-1").disabled = false;
+    setTimeout(() => $("#prop-text-1").focus(), 50);
+  }
 }
 $("#prop-cancel").addEventListener("click", () => {
   $("#proposal-sheet").hidden = true; propCtx = null;
