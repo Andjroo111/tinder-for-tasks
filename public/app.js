@@ -6,6 +6,35 @@ const badgeEl = $("#pending-count");
 let cards = [];
 let currentIndex = 0;
 
+// Session counter — tracks which card in the current traversal the user is on.
+// sessionSeenIds: cards that have been the top card at some point this session.
+// sessionAllIds: every card id ever seen in cards[] this session (survives approve/skip).
+// Both reset when the stack empties (empty-state → new session).
+let sessionSeenIds = new Set();
+let sessionAllIds = new Set();
+
+// Persistent back-order: cards Andrew pushed to the back stay at the back across
+// the 30s auto-poll and across reloads. Keyed by cardId → push timestamp.
+const BACK_KEY = "tft.backOrder";
+const BACK_TTL_MS = 6 * 3600 * 1000;
+function loadBackOrder() {
+  try {
+    const raw = localStorage.getItem(BACK_KEY);
+    if (!raw) return {};
+    const now = Date.now();
+    const parsed = JSON.parse(raw) || {};
+    const cleaned = {};
+    for (const [id, ts] of Object.entries(parsed)) {
+      if (typeof ts === "number" && now - ts < BACK_TTL_MS) cleaned[id] = ts;
+    }
+    return cleaned;
+  } catch { return {}; }
+}
+function saveBackOrder() {
+  try { localStorage.setItem(BACK_KEY, JSON.stringify(backOrder)); } catch {}
+}
+let backOrder = loadBackOrder();
+
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     credentials: "same-origin",
@@ -22,7 +51,37 @@ async function api(path, opts = {}) {
 
 async function load() {
   const data = await api("/api/cards");
-  cards = data.cards || [];
+  const fetched = data.cards || [];
+  const currentTopId = cards[0]?.cardId;
+
+  // Drop backOrder entries whose card is no longer in the server list.
+  const liveIds = new Set(fetched.map((c) => c.cardId));
+  let changed = false;
+  for (const id of Object.keys(backOrder)) {
+    if (!liveIds.has(id)) { delete backOrder[id]; changed = true; }
+  }
+  if (changed) saveBackOrder();
+
+  // Split: normal cards keep server order (tier desc, createdAt asc);
+  // backed cards go to the end, oldest-pushed first so repeated "laters"
+  // cycle predictably.
+  const normal = fetched.filter((c) => !backOrder[c.cardId]);
+  const backed = fetched
+    .filter((c) => backOrder[c.cardId])
+    .sort((a, b) => backOrder[a.cardId] - backOrder[b.cardId]);
+  let ordered = [...normal, ...backed];
+
+  // Preserve the user's current top card across the auto-poll so a refresh
+  // does not yank him off the card he is actively reviewing.
+  if (currentTopId) {
+    const idx = ordered.findIndex((c) => c.cardId === currentTopId);
+    if (idx > 0) {
+      const [current] = ordered.splice(idx, 1);
+      ordered.unshift(current);
+    }
+  }
+
+  cards = ordered;
   currentIndex = 0;
   render();
   updateBadge();
@@ -49,12 +108,19 @@ function formatAge(iso) {
 function render() {
   stackEl.innerHTML = "";
   if (cards.length === 0) {
+    // Session resets at empty state — next load starts fresh at "1 of N".
+    sessionSeenIds.clear();
+    sessionAllIds.clear();
     emptyEl.hidden = false;
     return;
   }
   emptyEl.hidden = true;
 
+  // Update session counters before building the card.
+  cards.forEach((c) => sessionAllIds.add(c.cardId));
   const top = cards[0];
+  sessionSeenIds.add(top.cardId);
+
   const cardEl = buildCard(top);
   stackEl.appendChild(cardEl);
   attachGestures(cardEl, top);
@@ -67,7 +133,9 @@ function buildCard(card) {
   el.dataset.cardId = card.cardId;
   if (isOverride) el.dataset.kind = "override";
 
-  const pos = cards.length > 1 ? `<span class="pos-indicator">1 of ${cards.length}</span>` : "";
+  const posNum = sessionSeenIds.size;
+  const totalNum = sessionAllIds.size;
+  const pos = totalNum > 1 ? `<span class="pos-indicator">${posNum} of ${totalNum}</span>` : "";
   const head = `
     <div class="card-head">
       <div class="card-name">${escape(card.contactName)}${card.dogName ? ` · ${escape(card.dogName)}` : ""}${pos}</div>
@@ -361,6 +429,8 @@ function sendToBack(card) {
   if (i < 0) { render(); return; }
   const [moved] = cards.splice(i, 1);
   cards.push(moved);
+  backOrder[card.cardId] = Date.now();
+  saveBackOrder();
   render();
 }
 
@@ -919,9 +989,12 @@ document.querySelectorAll(".char-count").forEach((el) => {
 })();
 $("#next-btn").addEventListener("click", () => {
   if (cards.length < 2) return;
-  // Rotate: move top card to the back locally so you can peek ahead without acting
+  // Rotate: move top card to the back locally so you can peek ahead without acting.
+  // Persist the rotation so the 30s auto-poll does not undo it.
   const top = cards.shift();
   cards.push(top);
+  backOrder[top.cardId] = Date.now();
+  saveBackOrder();
   render();
 });
 
