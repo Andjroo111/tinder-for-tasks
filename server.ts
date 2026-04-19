@@ -40,6 +40,11 @@ app.use("*", async (c, next) => {
     const secret = c.req.header("X-Hermes-Secret");
     if (secret && process.env.HERMES_SECRET && secret === process.env.HERMES_SECRET) return next();
   }
+  // System-action endpoints (called by approve handler with same secret)
+  if (path.startsWith("/api/junk-delete/") && c.req.method === "POST") {
+    const secret = c.req.header("X-Hermes-Secret");
+    if (secret && process.env.HERMES_SECRET && secret === process.env.HERMES_SECRET) return next();
+  }
 
   const token = parseCookie(c.req.header("Cookie") || null);
   if (verifyToken(token)) return next();
@@ -199,6 +204,39 @@ app.post("/api/cards/:id/approve", async (c) => {
   }
   // Mark sent FIRST to prevent double-send on rapid repeat calls
   await updateStatus(card.cardId, "sent");
+
+  // Custom approve action: if the card carries an approveUrl, POST to it
+  // instead of sending SMS. Used for system-action cards (e.g. junk audit
+  // approvals where "approve" means "delete these GHL contacts").
+  if (card.approveUrl) {
+    try {
+      const res = await fetch(card.approveUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Hermes-Secret": process.env.HERMES_SECRET || "",
+        },
+        body: JSON.stringify({ cardId: card.cardId, contactId: card.contactId }),
+      });
+      const respBody = await res.text();
+      if (!res.ok) {
+        return c.json({ error: `approveUrl ${res.status}: ${respBody.slice(0, 300)}` }, 500);
+      }
+      await logActivity({
+        action: "sent",
+        contactName: card.contactName,
+        contactId: card.contactId,
+        dogName: card.dogName,
+        phone: card.phone,
+        preview: `custom action: ${respBody.slice(0, 100)}`,
+        at: new Date().toISOString(),
+      });
+      return c.json({ sent: true, customAction: true, response: respBody });
+    } catch (err) {
+      return c.json({ error: `approveUrl failed: ${String(err)}` }, 500);
+    }
+  }
+
   try {
     // Split multi-text drafts on `━━━ TEXT N/M (label) ━━━` markers.
     // Used for post-consultation 3-text follow-ups that would otherwise
@@ -543,6 +581,68 @@ app.get("/reset", (c) => {
   } catch (e) { document.getElementById("status").textContent = "Reset ok — tap below."; }
 })();
 </script></body></html>`);
+});
+
+// Junk audit category-approval endpoint. Triggered by a card's approveUrl
+// when Andrew swipes "approve" on a junk-audit card. Reads the manifest at
+// ~/gdkc/data/junk-audit/{date}.json and DELETEs the listed contacts via GHL.
+// Authenticated via X-Hermes-Secret header (set by the approve handler).
+app.post("/api/junk-delete/:category", async (c) => {
+  const secret = c.req.header("X-Hermes-Secret");
+  if (!secret || secret !== process.env.HERMES_SECRET) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+  const category = c.req.param("category");
+  const date = c.req.query("date") || new Date().toISOString().slice(0, 10);
+  const dryRun = c.req.query("dry_run") === "true";
+
+  const manifestPath = `${process.env.HOME}/gdkc/data/junk-audit/${date}.json`;
+  let manifest: Record<string, string[]>;
+  try {
+    const text = await Bun.file(manifestPath).text();
+    manifest = JSON.parse(text);
+  } catch (err) {
+    return c.json({ error: `manifest not found: ${manifestPath}` }, 404);
+  }
+
+  const ids = manifest[category];
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return c.json({ error: `no contacts in category ${category} for ${date}` }, 404);
+  }
+
+  if (dryRun) {
+    return c.json({ dry_run: true, category, date, would_delete: ids.length, ids });
+  }
+
+  const token = process.env.GHL_BEARER_TOKEN;
+  if (!token) return c.json({ error: "GHL_BEARER_TOKEN not set" }, 500);
+
+  let ok = 0;
+  let fail = 0;
+  const failures: { id: string; status: number; body: string }[] = [];
+  for (const id of ids) {
+    try {
+      const r = await fetch(`https://services.leadconnectorhq.com/contacts/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Version": "2021-07-28",
+        },
+      });
+      if (r.status >= 200 && r.status < 300) {
+        ok++;
+      } else {
+        fail++;
+        failures.push({ id, status: r.status, body: (await r.text()).slice(0, 120) });
+      }
+      await new Promise((res) => setTimeout(res, 150));
+    } catch (err) {
+      fail++;
+      failures.push({ id, status: 0, body: String(err).slice(0, 120) });
+    }
+  }
+
+  return c.json({ category, date, deleted: ok, failed: fail, failures });
 });
 
 // Prevent stale caches for HTML/JS/CSS so refresh pulls new versions
